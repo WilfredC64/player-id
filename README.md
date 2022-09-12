@@ -160,7 +160,7 @@ player-id -pSoundMonitor -n
 
 ## File Format
 
-The signature file format specification can be found [here](/doc/Signature_File_Format).
+The signature file format specification can be found [here](/doc/Signature_File_Format.txt).
 
 ## Copyright
 
