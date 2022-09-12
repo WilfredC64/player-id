@@ -35,7 +35,7 @@ Examples:
 * tune?.sid
 * "C:\my c64 music collection\sids\*.sid"
 * C:\HVSC\C64Music\*.sid
-* ~"HVSC/C64Music/*.sid"
+* ~"/HVSC/C64Music/*.sid"
 
 &lt;options&gt;
 
@@ -160,7 +160,7 @@ player-id -pSoundMonitor -n
 
 ## File Format
 
-The signature file format specification can be found [here](/Signature_File_Format).
+The signature file format specification can be found [here](/doc/Signature_File_Format).
 
 ## Copyright
 
