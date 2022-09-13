@@ -50,9 +50,7 @@ impl Config {
                 "u" => list_unidentified = true,
                 "v" => verify_signatures = true,
                 "x" => display_hex_offset = true,
-                _ => {
-                    return Err(format!("Unknown option: {}", argument));
-                }
+                _ => return Err(format!("Unknown option: {}", argument))
             }
         }
 
