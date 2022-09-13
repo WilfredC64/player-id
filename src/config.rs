@@ -98,11 +98,10 @@ impl Config {
     fn set_hvsc_config(recursive: &mut bool, base_path: &mut String, filename: &mut String) -> Result<(), String>{
         if let Ok(hvsc_location) = env::var("HVSC") {
             *recursive = true;
-            *base_path = hvsc_location.to_string();
+            *base_path = hvsc_location;
             if filename.is_empty() {
                 *filename = "*.sid".to_string();
             }
-            println!("Scanning HVSC location: {}", hvsc_location);
         } else {
             return Err("HVSC environment variable not found.".to_string());
         }
@@ -121,9 +120,7 @@ impl Config {
     fn parse_argument_number(arg_name: &str, arg_value: &str) -> Result<u32, String> {
         let number = match arg_value.parse::<u32>() {
             Ok(i) => i,
-            Err(_e) => {
-                return Err(format!("{} must be a valid number.", arg_name));
-            }
+            Err(_e) => return Err(format!("{} must be a valid number.", arg_name))
         };
         if number > 0 {
             Ok(number)

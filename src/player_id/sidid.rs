@@ -241,7 +241,7 @@ impl SidId {
                 return Ok(default_config_file_path)
             }
         }
-        Err("File doesn't exist.".to_string())
+        Err(format!("File doesn't exist: {}", filename))
     }
 
     #[inline]

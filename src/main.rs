@@ -67,6 +67,10 @@ fn run() -> Result<(), String> {
 
     let sid_ids = load_config_file(config.config_file, config.player_name)?;
 
+    if config.scan_hvsc {
+        println!("Scanning HVSC location: {}", config.base_path);
+    }
+
     println!("Processing...");
 
     let max_depth = if config.recursive { usize::MAX } else { 1 };
@@ -172,7 +176,7 @@ fn output_elapsed_time(start_time: Instant) {
 }
 
 fn verify_signatures(config_file: Option<String>) -> Result<bool, String> {
-    println!("Checking SID ID signatures...");
+    println!("Checking signatures...");
 
     let config_path = get_config_path(config_file)?;
     println!("Verify config file: {}\n", config_path.display());
@@ -180,27 +184,32 @@ fn verify_signatures(config_file: Option<String>) -> Result<bool, String> {
     let issues_found = PlayerId::verify_config_file(&config_path)?;
 
     if !issues_found {
-        println!("No issues found in SID ID configuration.");
+        println!("No issues found in configuration.");
     }
     Ok(issues_found)
 }
 
 fn verify_sidid_info(config_file: Option<String>) -> Result<bool, String> {
-    println!("\nChecking SID ID info file...");
+    println!("\nChecking info file...");
 
     let config_path = get_config_path(config_file)?;
     let sid_ids = PlayerId::load_config_file(&config_path, None)?;
 
     let config_path_string = config_path.display().to_string().replace(".cfg", ".nfo");
-    let config_path = PlayerId::get_config_path(Some(config_path_string))?;
-    println!("Verify info file: {}\n", config_path.display());
+    let config_path = PlayerId::get_config_path(Some(config_path_string.clone()));
+    if let Ok(config_path) = config_path {
+        println!("Verify info file: {}\n", config_path.display());
 
-    let issues_found = PlayerId::verify_info_file(&config_path, &sid_ids)?;
+        let issues_found = PlayerId::verify_info_file(&config_path, &sid_ids)?;
 
-    if !issues_found {
-        println!("No issues found in info file.");
+        if !issues_found {
+            println!("No issues found in info file.");
+        }
+        Ok(issues_found)
+    } else {
+        println!("\nNo info file found: {}", config_path_string);
+        Ok(true)
     }
-    Ok(issues_found)
 }
 
 fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SidIdHolder>, String> {
