@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Lines, Read};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::{DecodeReaderBytesBuilder, DecodeReaderBytes};
@@ -12,13 +12,17 @@ use encoding_rs_io::{DecodeReaderBytesBuilder, DecodeReaderBytes};
 use super::bndm::{BndmConfig, find_pattern};
 
 const CMD_WILDCARD: u16 = 0x100;
-const DEFAULT_CONFIG_FILE_NAME: &str = "sidid.cfg";
 
 type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
 pub struct SignatureHolder {
     pub bndm_configs: Vec<BndmConfig>,
     pub signature_name: String
+}
+
+pub struct SignatureMatch {
+    pub signature_name: String,
+    pub indexes: Vec<usize>,
 }
 
 #[derive(Clone)]
@@ -30,7 +34,7 @@ pub struct SignatureInfo {
 pub struct Signature {}
 
 impl Signature {
-    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
+    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         let mut matches = vec![];
 
         let mut signature_names_added = HashMap::new();
@@ -56,7 +60,7 @@ impl Signature {
 
             if index_found && !signature_names_added.contains_key(&signature.signature_name) {
                 signature_names_added.insert(signature.signature_name.to_owned(), true);
-                matches.push((signature.signature_name.to_owned(), indexes));
+                matches.push(SignatureMatch { signature_name: signature.signature_name.to_owned(), indexes });
 
                 if !scan_for_multiple {
                     break;
@@ -173,14 +177,7 @@ impl Signature {
         false
     }
 
-    pub fn get_config_path(filename: Option<String>) -> Result<PathBuf, String> {
-        if let Some(filename) = filename {
-            Self::get_config_path_from_default_location(&filename)
-        } else {
-            Self::get_config_path_from_default_location(DEFAULT_CONFIG_FILE_NAME)
-        }
-    }
-
+    #[inline]
     fn is_info_file(filename: &PathBuf) -> bool {
         if let Ok(file) = File::open(filename) {
             let reader = BufReader::new(
@@ -228,20 +225,6 @@ impl Signature {
         if signature_name_to_filter.is_empty() || signature_name_to_filter.eq_ignore_ascii_case(signature_name) {
             signatures.push(signature);
         }
-    }
-
-    #[inline]
-    fn get_config_path_from_default_location(filename: &str) -> Result<PathBuf, String> {
-        let file = Path::new(filename).to_path_buf();
-        if file.exists() {
-            return Ok(file)
-        } else {
-            let default_config_file_path = std::env::current_exe().unwrap().parent().unwrap().join(filename);
-            if default_config_file_path.exists() {
-                return Ok(default_config_file_path)
-            }
-        }
-        Err(format!("File doesn't exist: {}", filename))
     }
 
     #[inline]
