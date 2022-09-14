@@ -177,7 +177,6 @@ impl Signature {
         false
     }
 
-    #[inline]
     fn is_info_file(filename: &PathBuf) -> bool {
         if let Ok(file) = File::open(filename) {
             let reader = BufReader::new(
@@ -205,7 +204,6 @@ impl Signature {
         false
     }
 
-    #[inline]
     fn process_multi_signatures(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
         for signature_line in &*signature_lines {
             Self::process_signature_line(signature_name_to_filter, signatures, signature_name, signature_line);
@@ -213,13 +211,11 @@ impl Signature {
         signature_lines.clear();
     }
 
-    #[inline]
     fn process_single_signature(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
         Self::process_signature_line(signature_name_to_filter, signatures, signature_name, &signature_lines.join(" "));
         signature_lines.clear();
     }
 
-    #[inline]
     fn process_signature_line(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_text: &str) {
         let signature = Self::process_signature_value(signature_name, signature_text);
         if signature_name_to_filter.is_empty() || signature_name_to_filter.eq_ignore_ascii_case(signature_name) {
@@ -227,7 +223,6 @@ impl Signature {
         }
     }
 
-    #[inline]
     fn process_signature_value(signature_name: &str, signature_text: &str) -> SignatureHolder {
         let mut signature = vec![];
         let mut bndm_configs = vec![];
@@ -252,12 +247,10 @@ impl Signature {
         SignatureHolder { signature_name: signature_name.to_string(), bndm_configs }
     }
 
-    #[inline]
     fn is_signature_min_length(signature_text_line: &str) -> bool {
         signature_text_line.len() >= 2
     }
 
-    #[inline]
     fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
             let signature_first_11bytes = signature_text_line[..11].as_bytes();
@@ -269,7 +262,6 @@ impl Signature {
         false
     }
 
-    #[inline]
     fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
             let signature_first_3bytes = signature_text_line[..3].as_bytes();
@@ -281,7 +273,6 @@ impl Signature {
         false
     }
 
-    #[inline]
     fn add_signature(signature: &[u16], bndm_configs: &mut Vec<BndmConfig>) {
         let (wildcard_used, calculated_wildcard) = Self::calculate_wildcard(signature);
 
@@ -300,7 +291,6 @@ impl Signature {
         }
     }
 
-    #[inline]
     fn calculate_wildcard(signature: &[u16]) -> (bool, Option<u8>) {
         const SIGNATURE_MAX_VALUE: u16 = 0x100; // only bytes 0x00 - 0xFF are used and 0x100 for the wildcard
         let mut bytes_used = [false; SIGNATURE_MAX_VALUE as usize + 1];
@@ -322,7 +312,6 @@ impl Signature {
         (bytes_used[CMD_WILDCARD as usize], Some(wildcard as u8))
     }
 
-    #[inline]
     fn convert_hex_to_bin(digit_string: &str) -> u16 {
         u16::from_str_radix(digit_string, 16).unwrap_or(0)
     }
@@ -486,7 +475,6 @@ impl Signature {
         Ok(error)
     }
 
-    #[inline]
     fn validate_signature_value_lines(signature_name: &str, signature_lines: &Vec<String>) -> bool {
         let mut error = false;
         for signature_line in signature_lines {
@@ -495,7 +483,6 @@ impl Signature {
         error
     }
 
-    #[inline]
     fn validate_signature_without_value(signature_names_added: &HashMap<String, bool>, signature_name: &String) -> bool {
         let mut error = false;
         if !signature_name.is_empty() {
@@ -508,7 +495,6 @@ impl Signature {
         error
     }
 
-    #[inline]
     fn validate_spaces(signature_name: &str, signature_value: &str, line_length: usize, signature_size: usize) -> bool {
         let mut error = false;
         if line_length != signature_size {
@@ -521,7 +507,6 @@ impl Signature {
         error
     }
 
-    #[inline]
     fn validate_signature_value(signature_name: &str, signature_text: &str) -> bool {
         let mut error = false;
 
@@ -552,7 +537,6 @@ impl Signature {
         error
     }
 
-    #[inline]
     fn validate_signature_range(signature_name: &str, signature_text: &str) -> bool {
         let mut error = false;
         let mut it = signature_text.split_ascii_whitespace().enumerate().peekable();
@@ -592,7 +576,6 @@ impl Signature {
         error
     }
 
-    #[inline]
     fn validate_info_tag(signature_name: &str, tag: &str, previous_tag: &str) -> bool {
         let tag = tag.trim();
         match tag {
@@ -610,7 +593,6 @@ impl Signature {
         }
     }
 
-    #[inline]
     fn validate_order(tag: &str, previous_tag: &str) -> bool {
         if !tag.is_empty() && !previous_tag.is_empty() {
             let tag_order = Self::get_order(tag);
@@ -621,7 +603,6 @@ impl Signature {
         }
     }
 
-    #[inline]
     fn get_order(tag: &str) -> i32 {
         let tag = tag.trim();
         match tag {
