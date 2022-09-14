@@ -5,24 +5,24 @@
 
 #[path = "./utils/sid_file.rs"] mod sid_file;
 mod bndm;
-mod sidid;
+mod signature;
 
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
 
-use sidid::{SidId};
-pub use sidid::{SidIdHolder, SidInfo};
+use signature::{Signature};
+pub use signature::{SignatureHolder, SignatureInfo};
 
 pub struct PlayerId {
 }
 
 impl PlayerId {
-    pub fn find_players_in_buffer(buffer: &[u8], sid_ids: &Vec<SidIdHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
-        SidId::find(buffer, 0, sid_ids, scan_for_multiple)
+    pub fn find_players_in_buffer(buffer: &[u8], sid_ids: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
+        Signature::find_signatures(buffer, 0, sid_ids, scan_for_multiple)
     }
 
-    pub fn find_players_in_file(filename: &str, sid_ids: &Vec<SidIdHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
+    pub fn find_players_in_file(filename: &str, sid_ids: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
         let sid_data = Self::read_file(filename);
         if let Ok(sid_data) = sid_data {
             let start_offset = if sid_file::is_sid_file(&sid_data) {
@@ -31,43 +31,43 @@ impl PlayerId {
                 0
             };
 
-            SidId::find(&sid_data, start_offset, sid_ids, scan_for_multiple)
+            Signature::find_signatures(&sid_data, start_offset, sid_ids, scan_for_multiple)
         } else {
             vec![]
         }
     }
 
-    pub fn find_player_info(sid_infos: &[SidInfo], player_name: &str) -> Option<SidInfo> {
-        SidId::find_player_info(sid_infos, player_name)
+    pub fn find_player_info(sid_infos: &[SignatureInfo], player_name: &str) -> Option<SignatureInfo> {
+        Signature::find_signature_info(sid_infos, player_name)
     }
 
     pub fn get_config_path(filename: Option<String>) -> Result<PathBuf, String> {
-        SidId::get_config_path(filename)
+        Signature::get_config_path(filename)
     }
 
     pub fn is_config_file(filename: &str) -> bool {
-        let path = SidId::get_config_path(Some(filename.to_string()));
+        let path = Signature::get_config_path(Some(filename.to_string()));
         if let Ok(path) = path {
-            SidId::is_config_file(&path)
+            Signature::is_config_file(&path)
         } else {
             false
         }
     }
 
-    pub fn load_config_file(file_path: &PathBuf, player_name: Option<String>) -> Result<Vec<SidIdHolder>, String> {
-        SidId::read_sidid_config(file_path, player_name)
+    pub fn read_config_file(file_path: &PathBuf, player_name: Option<String>) -> Result<Vec<SignatureHolder>, String> {
+        Signature::read_config_file(file_path, player_name)
     }
 
-    pub fn load_info_file(file_path: &PathBuf) -> Result<Vec<SidInfo>, String> {
-        SidId::read_sidid_info(file_path)
+    pub fn read_info_file(file_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
+        Signature::read_info_file(file_path)
     }
 
     pub fn verify_config_file(file_path: &PathBuf) -> Result<bool, String> {
-        SidId::verify_sidid_config(file_path)
+        Signature::verify_config_file(file_path)
     }
 
-    pub fn verify_info_file(file_path: &PathBuf, sidids: &[SidIdHolder]) -> Result<bool, String> {
-        SidId::verify_sidid_info(file_path, sidids)
+    pub fn verify_info_file(file_path: &PathBuf, sidids: &[SignatureHolder]) -> Result<bool, String> {
+        Signature::verify_info_file(file_path, sidids)
     }
 
     fn read_file(filename: &str) -> std::io::Result<Vec<u8>> {

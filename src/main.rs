@@ -14,7 +14,7 @@ use std::process::exit;
 use std::time::Instant;
 
 use rayon::prelude::*;
-use self::player_id::{PlayerId, SidIdHolder, SidInfo};
+use self::player_id::{PlayerId, SignatureHolder, SignatureInfo};
 use self::config::Config;
 
 const DEFAULT_FILENAME_COL_WIDTH: usize = 56;
@@ -193,7 +193,7 @@ fn verify_sidid_info(config_file: Option<String>) -> Result<bool, String> {
     println!("\nChecking info file...");
 
     let config_path = get_config_path(config_file)?;
-    let sid_ids = PlayerId::load_config_file(&config_path, None)?;
+    let sid_ids = PlayerId::read_config_file(&config_path, None)?;
 
     let config_path_string = config_path.display().to_string().replace(".cfg", ".nfo");
     let config_path = PlayerId::get_config_path(Some(config_path_string.clone()));
@@ -212,23 +212,23 @@ fn verify_sidid_info(config_file: Option<String>) -> Result<bool, String> {
     }
 }
 
-fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SidIdHolder>, String> {
+fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SignatureHolder>, String> {
     let config_path = get_config_path(config_file)?;
     println!("Using config file: {}\n", config_path.display());
 
-    let sid_ids = PlayerId::load_config_file(&config_path, player_name)?;
+    let sid_ids = PlayerId::read_config_file(&config_path, player_name)?;
     if sid_ids.is_empty() {
         return Err("No signature defined.".to_string());
     }
     Ok(sid_ids)
 }
 
-fn load_info_file(config_file: Option<String>) -> Result<Vec<SidInfo>, String> {
+fn load_info_file(config_file: Option<String>) -> Result<Vec<SignatureInfo>, String> {
     let config_path_string = get_config_path(config_file)?.display().to_string().replace(".cfg", ".nfo");
     let config_path = PlayerId::get_config_path(Some(config_path_string))?;
     println!("Using info file: {}\n", config_path.display());
 
-    let sid_infos = PlayerId::load_info_file(&config_path)?;
+    let sid_infos = PlayerId::read_info_file(&config_path)?;
     if sid_infos.is_empty() {
         return Err("No signature defined.".to_string());
     }
@@ -282,7 +282,7 @@ fn get_filename_strip_length(base_path: String, files: &Vec<String>) -> usize {
     }
 }
 
-fn output_occurrence_statistics(sid_ids: &Vec<SidIdHolder>, player_info: &Vec<PlayerInfo>) {
+fn output_occurrence_statistics(sid_ids: &Vec<SignatureHolder>, player_info: &Vec<PlayerInfo>) {
     println!("\nDetected players          Count");
     println!("-------------------------------");
 

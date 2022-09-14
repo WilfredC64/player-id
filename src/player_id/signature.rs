@@ -16,27 +16,27 @@ const DEFAULT_CONFIG_FILE_NAME: &str = "sidid.cfg";
 
 type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
-pub struct SidIdHolder {
+pub struct SignatureHolder {
     pub bndm_configs: Vec<BndmConfig>,
     pub signature_name: String
 }
 
 #[derive(Clone)]
-pub struct SidInfo {
+pub struct SignatureInfo {
     pub info_lines: Vec<String>,
     pub signature_name: String
 }
 
-pub struct SidId {}
+pub struct Signature {}
 
-impl SidId {
-    pub fn find(source: &[u8], start_offset: usize, sid_ids: &Vec<SidIdHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
-        let mut players = vec![];
+impl Signature {
+    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<(String, Vec<usize>)> {
+        let mut matches = vec![];
 
-        let mut player_names_added = HashMap::new();
+        let mut signature_names_added = HashMap::new();
 
-        for sidid in sid_ids {
-            let configs = &sidid.bndm_configs;
+        for signature in signatures {
+            let configs = &signature.bndm_configs;
             let mut indexes = vec![];
 
             let mut index_found = false;
@@ -54,9 +54,9 @@ impl SidId {
                 }
             }
 
-            if index_found && !player_names_added.contains_key(&sidid.signature_name) {
-                player_names_added.insert(sidid.signature_name.to_owned(), true);
-                players.push((sidid.signature_name.to_owned(), indexes));
+            if index_found && !signature_names_added.contains_key(&signature.signature_name) {
+                signature_names_added.insert(signature.signature_name.to_owned(), true);
+                matches.push((signature.signature_name.to_owned(), indexes));
 
                 if !scan_for_multiple {
                     break;
@@ -64,20 +64,20 @@ impl SidId {
             }
         }
 
-        players
+        matches
     }
 
-    pub fn find_player_info(sid_infos: &[SidInfo], player_name: &str) -> Option<SidInfo> {
-        sid_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(player_name)).cloned()
+    pub fn find_signature_info(signature_infos: &[SignatureInfo], signature_name: &str) -> Option<SignatureInfo> {
+        signature_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(signature_name)).cloned()
     }
 
-    pub fn read_sidid_config(file_path: &PathBuf, player_name: Option<String>) -> Result<Vec<SidIdHolder>, String> {
+    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<String>) -> Result<Vec<SignatureHolder>, String> {
         if !Self::is_config_file(file_path) {
             return Err("Not a config file.".to_string());
         }
 
-        let player_name = player_name.unwrap_or_default();
-        let mut sid_ids = vec![];
+        let signature_name_to_filter = signature_name_to_filter.unwrap_or_default();
+        let mut signatures = vec![];
 
         if let Ok(lines) = Self::read_lines(file_path) {
             let mut signature_name = "".to_string();
@@ -88,31 +88,31 @@ impl SidId {
 
                 if Self::is_signature_min_length(signature_text) {
                     if Self::is_signature_name(signature_text) {
-                        Self::process_multi_signatures(&player_name, &mut sid_ids, &signature_name, &mut signature_lines);
+                        Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         signature_name = signature_text.to_string();
                     } else {
                         signature_lines.push(signature_text.to_string());
                         if signature_text.len() >= 3 && signature_text[signature_text.len() - 3..].eq_ignore_ascii_case("END") {
-                            Self::process_single_signature(&player_name, &mut sid_ids, &signature_name, &mut signature_lines);
+                            Self::process_single_signature(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         }
                     }
                 } else {
-                    Self::process_multi_signatures(&player_name, &mut sid_ids, &signature_name, &mut signature_lines);
+                    Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                     signature_name = "".to_string();
                 }
             }
-            Self::process_multi_signatures(&player_name, &mut sid_ids, &signature_name, &mut signature_lines);
+            Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         }
 
-        Ok(sid_ids)
+        Ok(signatures)
     }
 
-    pub fn read_sidid_info(file_path: &PathBuf) -> Result<Vec<SidInfo>, String> {
+    pub fn read_info_file(file_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
         if !Self::is_info_file(file_path) {
             return Err("Not an info file.".to_string());
         }
 
-        let mut sid_infos = vec![];
+        let mut signature_infos = vec![];
         if let Ok(lines) = Self::read_lines(file_path) {
             let mut signature_name = "".to_string();
 
@@ -123,27 +123,27 @@ impl SidId {
                         info_lines.push(line);
                     } else if Self::is_signature_name(&line) {
                         if !signature_name.is_empty() {
-                            sid_infos.push(SidInfo { signature_name, info_lines: info_lines.to_owned() });
+                            signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
                         }
                         signature_name = line;
                     } else {
-                        sid_infos.push(SidInfo { signature_name, info_lines: info_lines.to_owned() });
+                        signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
                         info_lines.clear();
                         signature_name = "".to_string();
                     }
                 } else {
-                    sid_infos.push(SidInfo { signature_name, info_lines: info_lines.to_owned() });
+                    signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
                     info_lines.clear();
                     signature_name = "".to_string();
                 }
             }
 
             if !info_lines.is_empty() {
-                sid_infos.push(SidInfo { signature_name, info_lines: info_lines.to_owned() });
+                signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
             }
         }
 
-        Ok(sid_infos)
+        Ok(signature_infos)
     }
 
     pub fn is_config_file(filename: &PathBuf) -> bool {
@@ -173,7 +173,15 @@ impl SidId {
         false
     }
 
-    pub fn is_info_file(filename: &PathBuf) -> bool {
+    pub fn get_config_path(filename: Option<String>) -> Result<PathBuf, String> {
+        if let Some(filename) = filename {
+            Self::get_config_path_from_default_location(&filename)
+        } else {
+            Self::get_config_path_from_default_location(DEFAULT_CONFIG_FILE_NAME)
+        }
+    }
+
+    fn is_info_file(filename: &PathBuf) -> bool {
         if let Ok(file) = File::open(filename) {
             let reader = BufReader::new(
                 DecodeReaderBytesBuilder::new()
@@ -200,33 +208,25 @@ impl SidId {
         false
     }
 
-    pub fn get_config_path(filename: Option<String>) -> Result<PathBuf, String> {
-        if let Some(filename) = filename {
-            Self::get_config_path_from_default_location(&filename)
-        } else {
-            Self::get_config_path_from_default_location(DEFAULT_CONFIG_FILE_NAME)
-        }
-    }
-
     #[inline]
-    fn process_multi_signatures(player_name: &str, sid_ids: &mut Vec<SidIdHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
+    fn process_multi_signatures(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
         for signature_line in &*signature_lines {
-            Self::process_signature_line(player_name, sid_ids, signature_name, signature_line);
+            Self::process_signature_line(signature_name_to_filter, signatures, signature_name, signature_line);
         }
         signature_lines.clear();
     }
 
     #[inline]
-    fn process_single_signature(player_name: &str, sid_ids: &mut Vec<SidIdHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
-        Self::process_signature_line(player_name, sid_ids, signature_name, &signature_lines.join(" "));
+    fn process_single_signature(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
+        Self::process_signature_line(signature_name_to_filter, signatures, signature_name, &signature_lines.join(" "));
         signature_lines.clear();
     }
 
     #[inline]
-    fn process_signature_line(player_name: &str, sid_ids: &mut Vec<SidIdHolder>, signature_name: &str, signature_text: &str) {
-        let sidid_holder = Self::process_signature_value(signature_name, signature_text);
-        if player_name.is_empty() || player_name.eq_ignore_ascii_case(signature_name) {
-            sid_ids.push(sidid_holder);
+    fn process_signature_line(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_text: &str) {
+        let signature = Self::process_signature_value(signature_name, signature_text);
+        if signature_name_to_filter.is_empty() || signature_name_to_filter.eq_ignore_ascii_case(signature_name) {
+            signatures.push(signature);
         }
     }
 
@@ -245,7 +245,7 @@ impl SidId {
     }
 
     #[inline]
-    fn process_signature_value(signature_name: &str, signature_text: &str) -> SidIdHolder {
+    fn process_signature_value(signature_name: &str, signature_text: &str) -> SignatureHolder {
         let mut signature = vec![];
         let mut bndm_configs = vec![];
 
@@ -266,7 +266,7 @@ impl SidId {
             Self::add_signature(&signature, &mut bndm_configs);
         }
 
-        SidIdHolder { signature_name: signature_name.to_string(), bndm_configs }
+        SignatureHolder { signature_name: signature_name.to_string(), bndm_configs }
     }
 
     #[inline]
@@ -353,13 +353,13 @@ impl SidId {
         Ok(reader.lines())
     }
 
-    pub fn verify_sidid_config(file_path: &PathBuf) -> Result<bool, String> {
+    pub fn verify_config_file(file_path: &PathBuf) -> Result<bool, String> {
         if !Self::is_config_file(file_path) {
             return Err("Not a config file.".to_string());
         }
 
         let mut error = false;
-        let mut player_names_added = HashMap::new();
+        let mut signature_names_added = HashMap::new();
 
         let mut line_number = 1;
         let mut last_empty_line_number = -1;
@@ -372,7 +372,7 @@ impl SidId {
 
                 if Self::is_signature_min_length(signature_text) {
                     if Self::is_signature_name(signature_text) {
-                        error |= Self::validate_signature_without_value(&player_names_added, &signature_name);
+                        error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
                         error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
                         signature_lines.clear();
 
@@ -389,12 +389,12 @@ impl SidId {
                             println!("Signature name contains spaces or invalid signature value: {}", signature_name);
                         }
 
-                        if player_names_added.contains_key(&signature_name.to_ascii_uppercase()) {
+                        if signature_names_added.contains_key(&signature_name.to_ascii_uppercase()) {
                             error = true;
                             println!("Signature defined more than once or with different casing: {}", signature_name);
                         }
 
-                        player_names_added.insert(signature_name.to_ascii_uppercase(), false);
+                        signature_names_added.insert(signature_name.to_ascii_uppercase(), false);
                     } else {
                         if signature_name.is_empty() {
                             error = true;
@@ -406,7 +406,7 @@ impl SidId {
                             error |= Self::validate_signature_value(&signature_name, &signature_lines.join(" "));
                             signature_lines.clear();
                         }
-                        player_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
                     }
                     error |= Self::validate_spaces(&signature_name, signature_text, line.len(), signature_text.len())
                 } else {
@@ -415,14 +415,14 @@ impl SidId {
                         println!("Line found with only spaces");
                     }
 
-                    error |= Self::validate_signature_without_value(&player_names_added, &signature_name);
+                    error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
                     error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
                     signature_lines.clear();
 
                     if !signature_text.is_empty() {
                         error = true;
                         println!("Invalid signature found. Signature name should be at least 3 characters long and signature value line should have at least 2 valid characters: {}", signature_text);
-                        player_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
                     }
 
                     if line.is_empty() && last_empty_line_number == line_number - 1 {
@@ -430,7 +430,7 @@ impl SidId {
                     }
 
                     if error {
-                        player_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
                     } else {
                         signature_name = "".to_string();
                     }
@@ -440,18 +440,18 @@ impl SidId {
 
                 line_number += 1;
             }
-            error |= Self::validate_signature_without_value(&player_names_added, &signature_name);
+            error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
             error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
         }
 
         Ok(error)
     }
 
-    pub fn verify_sidid_info(file_path: &PathBuf, sidids: &[SidIdHolder]) -> Result<bool, String> {
+    pub fn verify_info_file(file_path: &PathBuf, signatures: &[SignatureHolder]) -> Result<bool, String> {
         let mut error = false;
-        let mut player_names_added = HashMap::new();
+        let mut signature_names_added = HashMap::new();
 
-        let mut player_name = "".to_string();
+        let mut signature_name = "".to_string();
         let mut previous_tag = "".to_string();
 
         let mut line_number = 0;
@@ -467,7 +467,7 @@ impl SidId {
                 let signature_text = signature_text.trim();
 
                 if Self::is_info_tag(&line) {
-                    Self::validate_info_tag(&player_name, &line[..11], &previous_tag);
+                    Self::validate_info_tag(&signature_name, &line[..11], &previous_tag);
                     let tag = line[..11].trim();
                     if !tag.is_empty() {
                         previous_tag = line[..11].trim().to_owned();
@@ -478,25 +478,25 @@ impl SidId {
                     let position = signature_text.find(':');
                     if let Some(position) = position {
                         error = true;
-                        println!("Wrong indentation '{}' in: {}", &signature_text[..=position], player_name);
+                        println!("Wrong indentation '{}' in: {}", &signature_text[..=position], signature_name);
                         continue;
                     }
 
-                    if player_names_added.contains_key(signature_text) {
+                    if signature_names_added.contains_key(signature_text) {
                         error = true;
                         println!("Signature info defined more than once: {}", signature_text);
                     }
 
-                    player_name = signature_text.to_owned();
-                    player_names_added.insert(signature_text.to_owned(), true);
+                    signature_name = signature_text.to_owned();
+                    signature_names_added.insert(signature_text.to_owned(), true);
                 }
             }
         }
 
-        for player_name in player_names_added {
-            if !sidids.iter().any(|sidid| sidid.signature_name.eq(&player_name.0)) {
+        for signature_name in signature_names_added {
+            if !signatures.iter().any(|signature| signature.signature_name.eq(&signature_name.0)) {
                 error = true;
-                println!("Signature ID not found in config file: {}", player_name.0);
+                println!("Signature ID not found in config file: {}", signature_name.0);
             }
         }
 
@@ -513,10 +513,10 @@ impl SidId {
     }
 
     #[inline]
-    fn validate_signature_without_value(player_names_added: &HashMap<String, bool>, signature_name: &String) -> bool {
+    fn validate_signature_without_value(signature_names_added: &HashMap<String, bool>, signature_name: &String) -> bool {
         let mut error = false;
         if !signature_name.is_empty() {
-            let has_signature_value = player_names_added.get(&signature_name.to_ascii_uppercase());
+            let has_signature_value = signature_names_added.get(&signature_name.to_ascii_uppercase());
             if !has_signature_value.unwrap() {
                 error = true;
                 println!("Signature name found without a value: {}", signature_name);
