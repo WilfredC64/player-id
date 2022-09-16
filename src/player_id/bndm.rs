@@ -82,7 +82,7 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
         while d != 0 {
             j -= 1;
             if j == 0 {
-                if find_remaining(i, WORD_SIZE_IN_BITS, source, pattern, wildcard) {
+                if find_remaining(&source[i + WORD_SIZE_IN_BITS..], &pattern[WORD_SIZE_IN_BITS..], wildcard) {
                     return Some(i);
                 }
                 j = 1;
@@ -94,53 +94,36 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     None
 }
 
-#[inline]
-fn find_remaining(start_index: usize, offset: usize, source: &[u8], search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
+fn find_remaining(source: &[u8], search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
     if let Some(wildcard) = wildcard {
-        for i in offset..search_pattern.len() {
-            let current_byte = search_pattern[i];
-
-            if source[start_index + i] != current_byte && current_byte != *wildcard {
-                return false;
-            }
-        }
+        search_pattern.iter().enumerate().all(|(index, pattern_byte)| source[index] == *pattern_byte || *pattern_byte == *wildcard)
     } else {
-        for i in offset..search_pattern.len() {
-            if source[start_index + i] != search_pattern[i] {
-                return false;
-            }
-        }
+        search_pattern.iter().enumerate().all(|(index, pattern_byte)| source[index] == *pattern_byte)
     }
-    true
 }
 
-#[inline]
 fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
     cmp::min(search_pattern.len(), WORD_SIZE_IN_BITS)
 }
 
-#[inline]
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
     let len = search_pattern.len();
     let bit_select = 1 << (len - 1);
     let mut mask = 0;
 
-    for (i, char_in_pattern) in search_pattern.iter().enumerate() {
-        if *char_in_pattern == wildcard {
+    for (i, pattern_byte) in search_pattern.iter().enumerate() {
+        if *pattern_byte == wildcard {
             mask |= bit_select >> i;
         }
     }
     mask
 }
 
-#[inline]
 fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
     let len = search_pattern.len();
     let bit_select = 1 << (len - 1);
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
 
-    for i in 0..len {
-        masks[search_pattern[i] as usize] |= bit_select >> i;
-    }
+    search_pattern.iter().enumerate().for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
     masks
 }
