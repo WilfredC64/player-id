@@ -108,12 +108,14 @@ fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
     let len = search_pattern.len();
-    let bit_select = 1 << (len - 1);
     let mut mask = 0;
+    if len > 0 {
+        let bit_select = 1 << (len - 1);
 
-    for (i, pattern_byte) in search_pattern.iter().enumerate() {
-        if *pattern_byte == wildcard {
-            mask |= bit_select >> i;
+        for (i, pattern_byte) in search_pattern.iter().enumerate() {
+            if *pattern_byte == wildcard {
+                mask |= bit_select >> i;
+            }
         }
     }
     mask
@@ -121,9 +123,15 @@ fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
 
 fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
     let len = search_pattern.len();
-    let bit_select = 1 << (len - 1);
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
+    if len > 0 {
+        let bit_select = 1 << (len - 1);
 
-    search_pattern.iter().enumerate().for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
+        search_pattern.iter().enumerate().for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
+    }
     masks
 }
+
+#[cfg(test)]
+#[path = "./bndm_test.rs"]
+mod bndm_test;
