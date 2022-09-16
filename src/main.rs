@@ -64,6 +64,7 @@ fn run() -> Result<(), String> {
     let files = if !config.filename.is_empty() {
         globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
             .max_depth(max_depth)
+            .case_insensitive(true)
             .build().unwrap()
             .into_iter()
             .filter_map(Result::ok)
