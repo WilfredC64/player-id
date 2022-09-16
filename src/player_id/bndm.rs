@@ -82,7 +82,7 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
         while d != 0 {
             j -= 1;
             if j == 0 {
-                if find_remaining(i, WORD_SIZE_IN_BITS, source, &pattern, &wildcard) {
+                if find_remaining(i, WORD_SIZE_IN_BITS, source, pattern, wildcard) {
                     return Some(i);
                 }
                 j = 1;
