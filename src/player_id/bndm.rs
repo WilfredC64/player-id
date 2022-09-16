@@ -32,6 +32,7 @@ impl BndmConfig {
 
 pub fn find_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     match config.pattern.len() {
+        0 => None,
         1 => source.iter().position(|&x| x == config.pattern[0]),
         x if x > source.len() => None,
         x if x > WORD_SIZE_IN_BITS => find_large_pattern(source, config),
@@ -43,19 +44,20 @@ pub fn find_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
 fn find_small_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     let len = config.pattern.len() - 1;
     let end = source.len() - len;
+    let masks = &config.masks;
     let mut i = 0;
 
     while i < end {
         let mut j = len;
 
-        let mut d = config.masks[source[i + j] as usize];
-        d = (d << 1) & config.masks[source[i + j - 1] as usize];
+        let mut d = masks[source[i + j] as usize];
+        d = (d << 1) & masks[source[i + j - 1] as usize];
         while d != 0 {
             j -= 1;
-            if j as isize <= 0 {
+            if j == 0 {
                 return Some(i);
             }
-            d = (d << 1) & config.masks[source[i + j - 1] as usize];
+            d = (d << 1) & masks[source[i + j - 1] as usize];
         }
 
         i += j;
@@ -67,22 +69,25 @@ fn find_small_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
 fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     let len = config.pattern.len() - 1;
     let end = source.len() - len;
+    let masks = &config.masks;
+    let pattern = &config.pattern;
+    let wildcard = &config.wildcard;
     let mut i = 0;
 
     while i < end {
         let mut j = WORD_SIZE_IN_BITS - 1;
 
-        let mut d = config.masks[source[i + j] as usize];
-        d = (d << 1) & config.masks[source[i + j - 1] as usize];
+        let mut d = masks[source[i + j] as usize];
+        d = (d << 1) & masks[source[i + j - 1] as usize];
         while d != 0 {
             j -= 1;
-            if j as isize <= 0 {
-                if find_remaining(i, WORD_SIZE_IN_BITS, source, &config.pattern, &config.wildcard) {
+            if j == 0 {
+                if find_remaining(i, WORD_SIZE_IN_BITS, source, &pattern, &wildcard) {
                     return Some(i);
                 }
                 j = 1;
             }
-            d = (d << 1) & config.masks[source[i + j - 1] as usize];
+            d = (d << 1) & masks[source[i + j - 1] as usize];
         }
         i += j;
     }
