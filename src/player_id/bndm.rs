@@ -85,7 +85,7 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
                 if find_remaining(&source[i + WORD_SIZE_IN_BITS..], &pattern[WORD_SIZE_IN_BITS..], wildcard) {
                     return Some(i);
                 }
-                j = 1;
+                j += 1;
             }
             d = (d << 1) & masks[source[i + j - 1] as usize];
         }
@@ -107,8 +107,9 @@ fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
 }
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
-    let len = search_pattern.len();
     let mut mask = 0;
+
+    let len = search_pattern.len();
     if len > 0 {
         let bit_select = 1 << (len - 1);
 
@@ -122,8 +123,9 @@ fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
 }
 
 fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
-    let len = search_pattern.len();
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
+
+    let len = search_pattern.len();
     if len > 0 {
         let bit_select = 1 << (len - 1);
 
