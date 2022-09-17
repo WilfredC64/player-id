@@ -254,10 +254,8 @@ impl Signature {
     fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
             let signature_first_11bytes = signature_text_line[..11].as_bytes();
-            if (signature_first_11bytes[9] == b':' && signature_first_11bytes[10] == b' ') ||
-                signature_text_line[..11].eq("           ") {
-                return true;
-            }
+            return (signature_first_11bytes[9] == b':' && signature_first_11bytes[10] == b' ') ||
+                signature_text_line[..11].eq("           ");
         }
         false
     }
@@ -265,10 +263,9 @@ impl Signature {
     fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
             let signature_first_3bytes = signature_text_line[..3].as_bytes();
-            if signature_first_3bytes[2] != b' ' {
-                return signature_text_line.len() > 3 ||
-                    (!signature_first_3bytes.eq_ignore_ascii_case(b"END") && !signature_first_3bytes.eq_ignore_ascii_case(b"AND"));
-            }
+            return signature_first_3bytes[2] != b' ' &&
+                (signature_text_line.len() > 3 || (!signature_first_3bytes.eq_ignore_ascii_case(b"END") && !signature_first_3bytes.eq_ignore_ascii_case(b"AND")));
+
         }
         false
     }

@@ -8,11 +8,8 @@ const DATA_OFFSET_OFFSET: usize = 0x06;
 const LOAD_ADDRESS_OFFSET: usize = 0x08;
 
 pub fn is_sid_file(source: &[u8]) -> bool {
-    if source.len() >= MIN_SID_HEADER_SIZE {
+    source.len() >= MIN_SID_HEADER_SIZE &&
         (source[0] == b'R' || source[0] == b'P') && source[1] == b'S' && source[2] == b'I' && source[3] == b'D'
-    } else {
-        false
-    }
 }
 
 pub fn get_data_offset(source: &[u8]) -> usize {
