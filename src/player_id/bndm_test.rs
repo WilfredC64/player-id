@@ -309,3 +309,173 @@ fn find_empty_pattern_in_empty_source() {
 
     assert_eq!(index, None);
 }
+
+#[test]
+fn find_pattern_match_large_repeating_char_beginning() {
+    let source = b"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    let pattern = b"baaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(67));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_68() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(68));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_67() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(67));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_66() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(66));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_65() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(65));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_64() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(64));
+}
+
+#[test]
+fn find_pattern_match_large_repeating_char_at_index_63() {
+    let source = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let pattern = b"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(63));
+}
+
+#[test]
+fn find_pattern_match_repeating_char_beginning() {
+    let source = b"aaaaaaab";
+    let pattern = b"aaab";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(4));
+}
+
+#[test]
+fn find_pattern_match_repeating_char_end() {
+    let source = b"baaaaaaabaaaaaaaa";
+    let pattern = b"baaaaaaaa";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(8));
+}
+
+#[test]
+fn find_small_pattern_at_beginning() {
+    let source = b"baaaaaaabaaaaaaaa";
+    let pattern = b"ba";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(0));
+}
+
+#[test]
+fn find_small_pattern_at_end() {
+    let source = b"baaaaaaabaaaaaaac";
+    let pattern = b"ac";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(15));
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_at_beginning_match_end() {
+    let source = b"baaaaaaabaaaaaaac";
+    let pattern = b"?c";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(15));
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_at_beginning_match_beginning() {
+    let source = b"baaaaaaabaaaaaaac";
+    let pattern = b"?a";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(0));
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_at_beginning_no_match() {
+    let source = b"daaaaaaabaaaaaaac";
+    let pattern = b"?d";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, None);
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_at_end_match_beginning() {
+    let source = b"baaaaaaabaaaaaaac";
+    let pattern = b"b?";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(0));
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_at_end_match_end() {
+    let source = b"baaaaaaabaaaaaadc";
+    let pattern = b"d?";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(15));
+}
+
+#[test]
+fn find_small_pattern_with_wildcard_no_match() {
+    let source = b"baaaaaaabaaaaaadc";
+    let pattern = b"c?";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, None);
+}
