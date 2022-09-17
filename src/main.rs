@@ -13,7 +13,7 @@ use std::process::exit;
 use std::time::Instant;
 
 use rayon::prelude::*;
-use self::player_id::{PlayerId, SignatureHolder, SignatureMatch};
+use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 use self::config::Config;
 
 const DEFAULT_FILENAME_COL_WIDTH: usize = 56;
@@ -190,7 +190,7 @@ fn get_filename_strip_length(base_path: String, files: &Vec<String>) -> usize {
     }
 }
 
-fn output_occurrence_statistics(signature_ids: &Vec<SignatureHolder>, player_info: &Vec<FileMatches>) {
+fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_info: &Vec<FileMatches>) {
     println!("\nDetected players          Count");
     println!("-------------------------------");
 

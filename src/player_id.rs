@@ -13,18 +13,18 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use signature::{Signature};
-pub use signature::{SignatureHolder, SignatureInfo, SignatureMatch};
+pub use signature::{SignatureConfig, SignatureInfo, SignatureMatch};
 
 const DEFAULT_CONFIG_FILE_NAME: &str = "sidid.cfg";
 
 pub struct PlayerId {}
 
 impl PlayerId {
-    pub fn find_players_in_buffer(buffer: &[u8], signature_ids: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
+    pub fn find_players_in_buffer(buffer: &[u8], signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         Signature::find_signatures(buffer, 0, signature_ids, scan_for_multiple)
     }
 
-    pub fn find_players_in_file(filename: &str, sid_ids: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
+    pub fn find_players_in_file(filename: &str, sid_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         if let Ok(sid_data) = Self::read_file(filename) {
             let start_offset = if sid_file::is_sid_file(&sid_data) {
                 sid_file::get_data_offset(&sid_data)
@@ -61,7 +61,7 @@ impl PlayerId {
         }
     }
 
-    pub fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SignatureHolder>, String> {
+    pub fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SignatureConfig>, String> {
         let config_path = PlayerId::get_config_path(config_file)?;
         println!("Using config file: {}\n", config_path.display());
 

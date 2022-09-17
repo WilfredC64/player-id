@@ -15,7 +15,7 @@ const CMD_WILDCARD: u16 = 0x100;
 
 type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
-pub struct SignatureHolder {
+pub struct SignatureConfig {
     pub bndm_configs: Vec<BndmConfig>,
     pub signature_name: String
 }
@@ -34,7 +34,7 @@ pub struct SignatureInfo {
 pub struct Signature {}
 
 impl Signature {
-    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureHolder>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
+    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         let mut matches = vec![];
 
         let mut signature_names_added = HashMap::new();
@@ -75,7 +75,7 @@ impl Signature {
         signature_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(signature_name)).cloned()
     }
 
-    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<String>) -> Result<Vec<SignatureHolder>, String> {
+    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<String>) -> Result<Vec<SignatureConfig>, String> {
         if !Self::is_config_file(file_path) {
             return Err("Not a config file.".to_string());
         }
@@ -204,26 +204,26 @@ impl Signature {
         false
     }
 
-    fn process_multi_signatures(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
+    fn process_multi_signatures(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
         for signature_line in &*signature_lines {
             Self::process_signature_line(signature_name_to_filter, signatures, signature_name, signature_line);
         }
         signature_lines.clear();
     }
 
-    fn process_single_signature(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_lines: &mut Vec<String>) {
+    fn process_single_signature(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
         Self::process_signature_line(signature_name_to_filter, signatures, signature_name, &signature_lines.join(" "));
         signature_lines.clear();
     }
 
-    fn process_signature_line(signature_name_to_filter: &str, signatures: &mut Vec<SignatureHolder>, signature_name: &str, signature_text: &str) {
+    fn process_signature_line(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_text: &str) {
         let signature = Self::process_signature_value(signature_name, signature_text);
         if signature_name_to_filter.is_empty() || signature_name_to_filter.eq_ignore_ascii_case(signature_name) {
             signatures.push(signature);
         }
     }
 
-    fn process_signature_value(signature_name: &str, signature_text: &str) -> SignatureHolder {
+    fn process_signature_value(signature_name: &str, signature_text: &str) -> SignatureConfig {
         let mut signature = vec![];
         let mut bndm_configs = vec![];
 
@@ -244,7 +244,7 @@ impl Signature {
             Self::add_signature(&signature, &mut bndm_configs);
         }
 
-        SignatureHolder { signature_name: signature_name.to_string(), bndm_configs }
+        SignatureConfig { signature_name: signature_name.to_string(), bndm_configs }
     }
 
     fn is_signature_min_length(signature_text_line: &str) -> bool {
@@ -419,7 +419,7 @@ impl Signature {
         Ok(error)
     }
 
-    pub fn verify_info_file(file_path: &PathBuf, signatures: &[SignatureHolder]) -> Result<bool, String> {
+    pub fn verify_info_file(file_path: &PathBuf, signatures: &[SignatureConfig]) -> Result<bool, String> {
         let mut error = false;
         let mut signature_names_added = HashMap::new();
 
