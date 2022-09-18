@@ -10,6 +10,8 @@ V2.0: added support for && token and made END token optional
 SPECIFICATION
 =============
 
+Signatures are stored in a config file, e.g. in a file named "sidid.cfg".
+
 A signature starts with a name that can be a player/editor name or if that is
 not known, it is common to put the author's name of the player/musics for the
 signature name. A signature name must not contain spaces.
@@ -125,3 +127,54 @@ not match future SID files that have a slightly modified player code.
 The same counts for very small signatures, try not to make very small
 signatures to avoid false positive matches unless the code is very specific
 and if it is not possible to cover all the SID files with a bigger signature.
+
+
+INFO FILE FORMAT
+================
+
+Each config file can have an info file, e.g. a file named "sidid.nfo". An info
+file contains information about a signature. The info filename is the same as
+the config filename but with extension nfo.
+
+An info section starts with the signature name. This name should be present in
+the config file and must have the same casing. The lines under the signature
+name can have the following tags:
+
+* NAME
+* AUTHOR
+* RELEASED
+* REFERENCE
+* COMMENT
+
+The tags should be present in the same order but are all optional and at least
+one of the tags should be present for a signature. The tag is followed by a
+colon and a space. All the colons should be aligned, see example below.
+
+NAME
+The full name of the player or editor.
+
+AUTHOR
+The author(s) of the player or editor.
+
+RELEASED
+Includes the first release year of the player/editor, if known, and it may
+be followed with the publisher, group or author that released it.
+
+REFERENCE
+This is a URL of the release of the player or editor. It can only have one
+URL. If more references are known, it is common to put the reference of the
+first known release.
+
+COMMENT
+Includes extra information about the player/editor. This tag can contain
+multiple lines. The lines should be aligned and padded with spaces.
+
+Example of an info section:
+
+Music_Construction_Set
+     NAME: Will Harvey's Music Construction Set
+   AUTHOR: Will Harvey
+ RELEASED: 1984 Electronic Arts
+REFERENCE: https://csdb.dk/release/?id=185248
+  COMMENT: Originally developed for the Apple II and ported to other systems
+           like the C64
