@@ -436,7 +436,7 @@ impl Signature {
                 let signature_text = signature_text.trim();
 
                 if Self::is_info_tag(&line) {
-                    Self::validate_info_tag(&signature_name, &line[..11], &previous_tag);
+                    error |= Self::validate_info_tag(&signature_name, &line[..11], &previous_tag);
                     let tag = line[..11].trim();
                     if !tag.is_empty() {
                         previous_tag = line[..11].trim().to_owned();
@@ -447,7 +447,7 @@ impl Signature {
                     let position = signature_text.find(':');
                     if let Some(position) = position {
                         error = true;
-                        println!("Wrong indentation '{}' in: {}", &signature_text[..=position], signature_name);
+                        println!("Wrong indentation '{}' or invalid tag in: {}", &signature_text[..=position], signature_name);
                         continue;
                     }
 
@@ -577,38 +577,44 @@ impl Signature {
         let tag = tag.trim();
         match tag {
             "" | "AUTHOR:" | "RELEASED:" | "NAME:" | "REFERENCE:" | "COMMENT:" => {
-                let error = Self::validate_order(tag, previous_tag);
-                if error {
-                    println!("Order of tags '{}' '{}' is not valid: {}", tag, previous_tag, signature_name);
-                }
-                error
+                Self::validate_order(signature_name, tag, previous_tag)
             },
             _ => {
                 println!("Invalid tag found '{}' in signature: {}", tag, signature_name);
-                false
+                true
             }
         }
     }
 
-    fn validate_order(tag: &str, previous_tag: &str) -> bool {
-        if !tag.is_empty() && !previous_tag.is_empty() {
+    fn validate_order(signature_name: &str, tag: &str, previous_tag: &str) -> bool {
+        if !previous_tag.is_empty() {
             let tag_order = Self::get_order(tag);
             let previous_tag_order = Self::get_order(previous_tag);
-            tag_order <= previous_tag_order
+
+            let mut error = tag_order <= previous_tag_order;
+            if error {
+                println!("Order of tags '{}' '{}' is not valid: {}", tag, previous_tag, signature_name);
+            }
+
+            let multi_line_detected_on_non_comment = tag_order == 6 && previous_tag_order < 5;
+            if multi_line_detected_on_non_comment {
+                error = true;
+                println!("Multi-line not allowed for tag '{}' in: {}", previous_tag, signature_name);
+            }
+            error
         } else {
             false
         }
     }
 
     fn get_order(tag: &str) -> i32 {
-        let tag = tag.trim();
-        match tag {
-            "" => 0,
+        match tag.trim() {
             "NAME:" => 1,
             "AUTHOR:" => 2,
             "RELEASED:" => 3,
             "REFERENCE:" => 4,
             "COMMENT:" => 5,
+            "" => 6,
             _ => 0
         }
     }
