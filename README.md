@@ -23,7 +23,7 @@ cargo build --release
 
 Usage: player-id &lt;options&gt; &lt;file_path_pattern&gt;
 
-&lt;file_path_pattern&gt;
+### &lt;file_path_pattern&gt;
 
 > The file_path_pattern can be any SID or other filename. You can use
 wildcards to process multiple SID and PRG files. You may want to use the <nobr>-s</nobr>
@@ -37,7 +37,7 @@ Examples:
 * C:\\HVSC\\C64Music\\*.sid
 * ~"/HVSC/C64Music/*.sid"
 
-&lt;options&gt;
+### &lt;options&gt;
 
 **-c{max_threads}**: set the maximum CPU threads to be used [Default is all]
 
