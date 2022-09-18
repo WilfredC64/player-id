@@ -33,8 +33,8 @@ in the folder name then surround the folder and filename with double quotes.
 Examples:
 * *.sid
 * tune?.sid
-* "C:\my c64 music collection\sids\*.sid"
-* C:\HVSC\C64Music\*.sid
+* "C:\\my c64 music collection\\sids\\*.sid"
+* C:\\HVSC\\C64Music\\*.sid
 * ~"/HVSC/C64Music/*.sid"
 
 &lt;options&gt;
