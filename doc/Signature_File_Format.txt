@@ -178,3 +178,5 @@ Music_Construction_Set
 REFERENCE: https://csdb.dk/release/?id=185248
   COMMENT: Originally developed for the Apple II and ported to other systems
            like the C64
+
+Info sections are separated with an empty line.
