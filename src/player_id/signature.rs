@@ -457,7 +457,7 @@ impl Signature {
 
                     info_line_found = true;
                 } else if Self::is_signature_name(signature_text) {
-                    if signature_name_found {
+                    if signature_name_found && !info_line_found {
                         error = true;
                         eprintln!("Signature name found without any info: {}\r", signature_name);
                     }
