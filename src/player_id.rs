@@ -46,9 +46,9 @@ impl PlayerId {
         let player_infos = PlayerId::load_info_file(config_file)?;
 
         if let Some(player_info) = Signature::find_signature_info(&player_infos, player_name) {
-            println!("Player info:\n\n{}\n{}", player_info.signature_name, player_info.info_lines.join("\n"));
+            println!("Player info:\r\n\r\n{}\r\n{}\r", player_info.signature_name, player_info.info_lines.join("\r\n"));
         } else {
-            println!("No info found for player ID: {}", &player_name);
+            eprintln!("No info found for player ID: {}\r", &player_name);
         }
         Ok(())
     }
@@ -63,7 +63,7 @@ impl PlayerId {
 
     pub fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SignatureConfig>, String> {
         let config_path = PlayerId::get_config_path(config_file)?;
-        println!("Using config file: {}\n", config_path.display());
+        println!("Using config file: {}\r\n\r", config_path.display());
 
         let sid_ids = Signature::read_config_file(&config_path, player_name)?;
         if sid_ids.is_empty() {
@@ -75,7 +75,7 @@ impl PlayerId {
     pub fn load_info_file(config_file: Option<String>) -> Result<Vec<SignatureInfo>, String> {
         let config_path_string = PlayerId::get_config_path(config_file)?.display().to_string().replace(".cfg", ".nfo");
         let config_path = PlayerId::get_config_path_with_fallback(&config_path_string)?;
-        println!("Using info file: {}\n", config_path.display());
+        println!("Using info file: {}\r\n\r", config_path.display());
 
         let sid_infos = Signature::read_info_file(&config_path)?;
         if sid_infos.is_empty() {
@@ -85,21 +85,21 @@ impl PlayerId {
     }
 
     pub fn verify_signatures(config_file: Option<String>) -> Result<bool, String> {
-        println!("Checking signatures...");
+        eprintln!("Checking signatures...\r");
 
         let config_path = PlayerId::get_config_path(config_file)?;
-        println!("Verify config file: {}\n", config_path.display());
+        eprintln!("Verify config file: {}\r\n\r", config_path.display());
 
         let issues_found = Signature::verify_config_file(&config_path)?;
 
         if !issues_found {
-            println!("No issues found in configuration.");
+            eprintln!("No issues found in configuration.\r");
         }
         Ok(issues_found)
     }
 
     pub fn verify_signature_info(config_file: Option<String>) -> Result<bool, String> {
-        println!("\nChecking info file...");
+        eprintln!("\r\nChecking info file...\r");
 
         let config_path = PlayerId::get_config_path(config_file)?;
         let sid_ids = Signature::read_config_file(&config_path, None)?;
@@ -108,16 +108,16 @@ impl PlayerId {
         let config_path = PlayerId::get_config_path_with_fallback(&config_path_string);
 
         if let Ok(config_path) = config_path {
-            println!("Verify info file: {}\n", config_path.display());
+            eprintln!("Verify info file: {}\r\n\r", config_path.display());
 
             let issues_found = Signature::verify_info_file(&config_path, &sid_ids)?;
 
             if !issues_found {
-                println!("No issues found in info file.");
+                eprintln!("No issues found in info file.\r");
             }
             Ok(issues_found)
         } else {
-            println!("\nNo info file found: {}", config_path_string);
+            eprintln!("\r\nNo info file found: {}\r", config_path_string);
             Ok(true)
         }
     }

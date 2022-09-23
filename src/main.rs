@@ -27,7 +27,7 @@ fn main() {
     match run() {
         Ok(_) => {}
         Err(message) => {
-            eprintln!("ERROR: {}", message);
+            eprintln!("ERROR: {}\r", message);
             exit(1);
         }
     }
@@ -51,10 +51,10 @@ fn run() -> Result<(), String> {
     }
 
     if config.scan_hvsc {
-        println!("Scanning HVSC location: {}", config.base_path);
+        eprintln!("Scanning HVSC location: {}\r", config.base_path);
     }
 
-    println!("Processing...");
+    eprintln!("Processing...\r");
 
     let start_time = Instant::now();
     let signature_ids = PlayerId::load_config_file(config.config_file, config.player_name)?;
@@ -75,7 +75,7 @@ fn run() -> Result<(), String> {
     };
 
     if files.is_empty() {
-        println!("No file(s) found.");
+        eprintln!("No file(s) found.\r");
         return Ok(());
     }
 
@@ -115,7 +115,7 @@ fn run() -> Result<(), String> {
             if file_matches.matches.is_empty() {
                 unidentified_files += 1;
 
-                println!("{:<0width$} >> UNIDENTIFIED <<", filename[..filename_size].replace('\\', "/"), width = filename_width);
+                println!("{:<0width$} >> UNIDENTIFIED <<\r", filename[..filename_size].replace('\\', "/"), width = filename_width);
             } else {
                 identified_files += 1;
                 identified_players += file_matches.matches.len();
@@ -128,9 +128,9 @@ fn run() -> Result<(), String> {
                         player.signature_name.to_string()
                     };
                     if index == 0 {
-                        println!("{:<0width$} {}", filename[..filename_size].replace('\\', "/"), player_name, width = filename_width);
+                        println!("{:<0width$} {}\r", filename[..filename_size].replace('\\', "/"), player_name, width = filename_width);
                     } else {
-                        println!("{:<0width$} {}", "", player_name, width = filename_width);
+                        println!("{:<0width$} {}\r", "", player_name, width = filename_width);
                     }
                 }
             }
@@ -143,11 +143,11 @@ fn run() -> Result<(), String> {
         }
     });
 
-    println!("\nSummary:");
-    println!("Identified players    {:>9}", identified_players);
-    println!("Identified files      {:>9}", identified_files);
-    println!("Unidentified files    {:>9}", unidentified_files);
-    println!("Total files processed {:>9}", processed_files);
+    println!("\r\nSummary:\r");
+    println!("Identified players    {:>9}\r", identified_players);
+    println!("Identified files      {:>9}\r", identified_files);
+    println!("Unidentified files    {:>9}\r", unidentified_files);
+    println!("Total files processed {:>9}\r", processed_files);
 
     output_elapsed_time(start_time);
     Ok(())
@@ -159,7 +159,7 @@ fn output_elapsed_time(start_time: Instant) {
     let seconds = time_seconds % 60;
     let minutes = time_seconds / 60 % 60;
     let hours = time_seconds / 60 / 60;
-    println!("\nTotal time: {:0>2}:{:0>2}:{:0>2} (+{} milliseconds)", hours, minutes, seconds, time_millis % 1000);
+    eprintln!("\r\nTotal time: {:0>2}:{:0>2}:{:0>2} (+{} milliseconds)\r", hours, minutes, seconds, time_millis % 1000);
 }
 
 fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
@@ -191,8 +191,8 @@ fn get_filename_strip_length(base_path: String, files: &Vec<String>) -> usize {
 }
 
 fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_info: &Vec<FileMatches>) {
-    println!("\nDetected players          Count");
-    println!("-------------------------------");
+    println!("\r\nDetected players          Count\r");
+    println!("-------------------------------\r");
 
     let mut player_occurrence: HashMap<String, i32> = HashMap::new();
     for players in player_info {
@@ -207,26 +207,26 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
         if !signature_id.signature_name.eq(previous_player_name) {
             previous_player_name = &signature_id.signature_name;
             if let Some(occurrence) = player_occurrence.get(&signature_id.signature_name) {
-                println!("{:<24} {:>6}", signature_id.signature_name, occurrence);
+                println!("{:<24} {:>6}\r", signature_id.signature_name, occurrence);
             }
         }
     }
 }
 
 fn print_usage() {
-    println!("C64 Music Player Identifier (PI) v2.0 - Copyright (c) 2012-2022 Wilfred Bos");
-    println!("\nUsage: player-id <options> <file_path_pattern>");
-    println!("\n<Options>");
-    println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]");
-    println!("  -f{{config_file}}: config file [Default SIDIDCFG env. var. / sidid.cfg file]");
-    println!("  -h: scan HVSC location [Uses HVSC env. variable for HVSC path]");
-    println!("  -n: show player info [use together with -p option]");
-    println!("  -m: scan for multiple signatures");
-    println!("  -o: list only unidentified files");
-    println!("  -p{{player_name}}: scan only for specific player name");
-    println!("  -s: include subdirectories");
-    println!("  -t: truncate filenames");
-    println!("  -u: list also unidentified files");
-    println!("  -v: verify signatures");
-    println!("  -x: display hexadecimal offset of signature found");
+    println!("C64 Music Player Identifier (PI) v2.0 - Copyright (c) 2012-2022 Wilfred Bos\r");
+    println!("\r\nUsage: player-id <options> <file_path_pattern>\r");
+    println!("\r\n<Options>\r");
+    println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]\r");
+    println!("  -f{{config_file}}: config file [Default SIDIDCFG env. var. / sidid.cfg file]\r");
+    println!("  -h: scan HVSC location [Uses HVSC env. variable for HVSC path]\r");
+    println!("  -n: show player info [use together with -p option]\r");
+    println!("  -m: scan for multiple signatures\r");
+    println!("  -o: list only unidentified files\r");
+    println!("  -p{{player_name}}: scan only for specific player name\r");
+    println!("  -s: include subdirectories\r");
+    println!("  -t: truncate filenames\r");
+    println!("  -u: list also unidentified files\r");
+    println!("  -v: verify signatures\r");
+    println!("  -x: display hexadecimal offset of signature found\r");
 }
