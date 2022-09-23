@@ -96,7 +96,7 @@ impl Signature {
                         signature_name = signature_text.to_string();
                     } else {
                         signature_lines.push(signature_text.to_string());
-                        if signature_text.len() >= 3 && signature_text[signature_text.len() - 3..].eq_ignore_ascii_case("END") {
+                        if signature_text.len() >= 3 && signature_text.as_bytes()[signature_text.len() - 3..].eq_ignore_ascii_case(b"END") {
                             Self::process_single_signature(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         }
                     }
@@ -129,6 +129,7 @@ impl Signature {
                         if !signature_name.is_empty() {
                             signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
                         }
+                        info_lines.clear();
                         signature_name = line;
                     } else {
                         signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
@@ -253,19 +254,18 @@ impl Signature {
 
     fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
-            let signature_first_11bytes = signature_text_line[..11].as_bytes();
+            let signature_first_11bytes = &signature_text_line.as_bytes()[..11];
             return (signature_first_11bytes[9] == b':' && signature_first_11bytes[10] == b' ') ||
-                signature_text_line[..11].eq("           ");
+                signature_first_11bytes.eq(b"           ");
         }
         false
     }
 
     fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
-            let signature_first_3bytes = signature_text_line[..3].as_bytes();
+            let signature_first_3bytes = &signature_text_line.as_bytes()[0..3];
             return signature_first_3bytes[2] != b' ' &&
                 (signature_text_line.len() > 3 || (!signature_first_3bytes.eq_ignore_ascii_case(b"END") && !signature_first_3bytes.eq_ignore_ascii_case(b"AND")));
-
         }
         false
     }
@@ -371,7 +371,7 @@ impl Signature {
                         }
 
                         signature_lines.push(signature_text.to_string());
-                        if signature_text.len() >= 3 && signature_text[signature_text.len() - 3..].eq_ignore_ascii_case("END") {
+                        if signature_text.len() >= 3 && signature_text.as_bytes()[signature_text.len() - 3..].eq_ignore_ascii_case(b"END") {
                             error |= Self::validate_signature_value(&signature_name, &signature_lines.join(" "));
                             signature_lines.clear();
                         }
@@ -436,10 +436,15 @@ impl Signature {
                 let signature_text = signature_text.trim();
 
                 if Self::is_info_tag(&line) {
-                    error |= Self::validate_info_tag(&signature_name, &line[..11], &previous_tag);
-                    let tag = line[..11].trim();
+                    let tag = line.chars().take(10).collect::<String>();
+                    let tag = tag.trim();
+                    error |= Self::validate_info_tag(&signature_name, tag, &previous_tag);
+
+                    let value = &line.chars().skip(11).collect::<String>();
+                    error |= Self::validate_info_tag_value(&signature_name, tag, value);
+
                     if !tag.is_empty() {
-                        previous_tag = line[..11].trim().to_owned();
+                        previous_tag = tag.to_owned();
                     }
                 } else if Self::is_signature_name(signature_text) {
                     previous_tag = "".to_string();
@@ -573,8 +578,24 @@ impl Signature {
         error
     }
 
+    fn validate_info_tag_value(signature_name: &str, tag: &str, value: &str) -> bool {
+        let mut error = false;
+
+        if let Some(first_char) = value.chars().next() {
+            if first_char.is_ascii_whitespace() {
+                error = true;
+                println!("Value in '{}' is not correctly aligned in: {}", tag.trim(), signature_name);
+            }
+        }
+
+        if tag.eq_ignore_ascii_case("REFERENCE:") && !value.trim().to_ascii_uppercase().starts_with("HTTP") {
+            error = true;
+            println!("Reference has an invalid URL in signature: {}", signature_name);
+        }
+        error
+    }
+
     fn validate_info_tag(signature_name: &str, tag: &str, previous_tag: &str) -> bool {
-        let tag = tag.trim();
         match tag {
             "" | "AUTHOR:" | "RELEASED:" | "NAME:" | "REFERENCE:" | "COMMENT:" => {
                 Self::validate_order(signature_name, tag, previous_tag)
