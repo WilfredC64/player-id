@@ -14,16 +14,10 @@ pub struct BndmConfig {
 
 impl BndmConfig {
     pub fn new(search_pattern: &[u8], wildcard: Option<u8>) -> BndmConfig {
-        let len = get_pattern_length_within_cpu_word(search_pattern);
-
-        let wildcard_mask = if let Some(wildcard) = wildcard {
-            calculate_wildcard_mask(&search_pattern[..len], wildcard)
-        } else {
-            0
-        };
+        let wildcard_mask = calculate_wildcard_mask(search_pattern, wildcard);
 
         BndmConfig {
-            masks: generate_masks(&search_pattern[..len], wildcard_mask),
+            masks: generate_masks(search_pattern, wildcard_mask),
             wildcard,
             pattern: search_pattern.to_owned()
         }
@@ -106,16 +100,18 @@ fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
     cmp::min(search_pattern.len(), WORD_SIZE_IN_BITS)
 }
 
-fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
+fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize {
     let mut mask = 0;
 
-    let len = search_pattern.len();
-    if len > 0 {
-        let bit_select = 1 << (len - 1);
+    if let Some(wildcard) = wildcard {
+        let len = get_pattern_length_within_cpu_word(search_pattern);
+        if len > 0 {
+            let bit_select = 1 << (len - 1);
 
-        for (i, pattern_byte) in search_pattern.iter().enumerate() {
-            if *pattern_byte == wildcard {
-                mask |= bit_select >> i;
+            for (i, pattern_byte) in search_pattern.iter().enumerate().take(len) {
+                if *pattern_byte == wildcard {
+                    mask |= bit_select >> i;
+                }
             }
         }
     }
@@ -125,11 +121,11 @@ fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: u8) -> usize {
 fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
 
-    let len = search_pattern.len();
+    let len = get_pattern_length_within_cpu_word(search_pattern);
     if len > 0 {
         let bit_select = 1 << (len - 1);
 
-        search_pattern.iter().enumerate().for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
+        search_pattern.iter().enumerate().take(len).for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
     }
     masks
 }

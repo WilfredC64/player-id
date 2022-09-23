@@ -88,16 +88,16 @@ fn run() -> Result<(), String> {
     let _ = pool.install(|| {
         let matches: Vec<FileMatches> = files
             .par_iter()
-            .map(|path| {
-                let matches = PlayerId::find_players_in_file(path, &signature_ids, config.scan_for_multiple);
+            .map(|filename| {
+                let matches = PlayerId::find_players_in_file(filename, &signature_ids, config.scan_for_multiple);
 
                 FileMatches {
                     matches,
-                    filename: path.to_owned()
+                    filename: filename.to_owned()
                 }
             })
             .filter(|info|
-                (info.matches.is_empty() && (config.only_list_unidentified || config.list_unidentified))||
+                (info.matches.is_empty() && (config.only_list_unidentified || config.list_unidentified)) ||
                 (!info.matches.is_empty() && !config.only_list_unidentified))
             .collect();
 
@@ -176,18 +176,13 @@ fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatch
     DEFAULT_FILENAME_COL_WIDTH
 }
 
-fn get_filename_strip_length(base_path: String, files: &Vec<String>) -> usize {
-    let base_path_length = if base_path.eq(".") { 2 } else { 0 };
-    if !files.is_empty() {
-        let hvsc_root = hvsc::get_hvsc_root(files.first().unwrap());
-        if let Some(hvsc_root) = hvsc_root {
-            hvsc_root.len() + 1
-        } else {
-            base_path_length
+fn get_filename_strip_length(base_path: String, files: &[String]) -> usize {
+    if let Some(first_file) = files.first() {
+        if let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
+            return hvsc_root.len() + 1
         }
-    } else {
-        base_path_length
     }
+    if base_path.eq(".") { 2 } else { 0 }
 }
 
 fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_info: &Vec<FileMatches>) {
