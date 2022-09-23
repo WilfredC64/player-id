@@ -10,10 +10,11 @@ V2.0: added support for && token and made END token optional
 SPECIFICATION
 =============
 
-Signatures are stored in a config file, e.g. in a file named "sidid.cfg".
+Signatures are stored in a config file, e.g., in a file named "sidid.cfg".
+This file should be ISO-8859-1 encoded.
 
 A signature starts with a name that can be a player/editor name or if that is
-not known, it is common to put the author's name of the player/musics for the
+not known, it is common to put the author's name of the player/tunes for the
 signature name. A signature name must not contain spaces.
 
 A signature consists of 2 hexadecimal digits and can contain wildcards by
@@ -29,6 +30,9 @@ Each signature can be ended with the END token. This is useful when you want
 to define a signature on multiple lines. If no END token is used, a signature
 definition ends at the end of the line. For version 1 of the file format the
 END token is required at the end of each signature.
+
+Signatures can be separated by an empty line or can be concatenated. A new
+signature starts when the line specifies a signature name.
 
 Example:
 
@@ -134,7 +138,8 @@ INFO FILE FORMAT
 
 Each config file can have an info file, e.g. a file named "sidid.nfo". An info
 file contains information about a signature. The info filename is the same as
-the config filename but with extension nfo.
+the config filename but with extension nfo. The info file should be ISO-8859-1
+encoded.
 
 An info section starts with the signature name. This name should be present in
 the config file and must have the same casing. The lines under the signature
@@ -179,4 +184,5 @@ REFERENCE: https://csdb.dk/release/?id=185248
   COMMENT: Originally developed for the Apple II and ported to other systems
            like the C64
 
-Info sections are separated with an empty line.
+Info sections can be separated by an empty line or can be concatenated. A new
+section starts when the line specifies a signature name.
