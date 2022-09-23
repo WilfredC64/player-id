@@ -420,11 +420,13 @@ impl Signature {
         let mut error = false;
         let mut signature_names_added = HashMap::new();
 
-        let mut signature_name = "".to_string();
-        let mut previous_tag = "".to_string();
-
         let mut line_number = 0;
         if let Ok(lines) = Self::read_lines(file_path) {
+            let mut signature_name = "".to_string();
+            let mut previous_tag = "".to_string();
+            let mut info_line_found = false;
+            let mut signature_name_found = false;
+
             for line in lines.flatten() {
                 line_number += 1;
                 let signature_text = line.trim_end();
@@ -436,6 +438,12 @@ impl Signature {
                 let signature_text = signature_text.trim();
 
                 if Self::is_info_tag(&line) {
+                    if !signature_name_found {
+                        error = true;
+                        eprintln!("Info found without a signature name at line: {}\r", line_number);
+                        previous_tag = "".to_string();
+                    }
+
                     let tag = line.chars().take(10).collect::<String>();
                     let tag = tag.trim();
                     error |= Self::validate_info_tag(&signature_name, tag, &previous_tag);
@@ -446,11 +454,15 @@ impl Signature {
                     if !tag.is_empty() {
                         previous_tag = tag.to_owned();
                     }
-                } else if Self::is_signature_name(signature_text) {
-                    previous_tag = "".to_string();
 
-                    let position = signature_text.find(':');
-                    if let Some(position) = position {
+                    info_line_found = true;
+                } else if Self::is_signature_name(signature_text) {
+                    if signature_name_found {
+                        error = true;
+                        eprintln!("Signature name found without any info: {}\r", signature_name);
+                    }
+
+                    if let Some(position) = signature_text.find(':') {
                         error = true;
                         eprintln!("Wrong indentation '{}' or invalid tag in: {}\r", &signature_text[..=position], signature_name);
                         continue;
@@ -458,11 +470,23 @@ impl Signature {
 
                     if signature_names_added.contains_key(signature_text) {
                         error = true;
-                        eprintln!("Signature info defined more than once: {}\r", signature_text);
+                        eprintln!("Signature name defined more than once: {}\r", signature_text);
                     }
 
+                    previous_tag = "".to_string();
                     signature_name = signature_text.to_owned();
                     signature_names_added.insert(signature_text.to_owned(), true);
+
+                    signature_name_found = true;
+                    info_line_found = false;
+                } else {
+                    if signature_name_found && !info_line_found {
+                        error = true;
+                        eprintln!("Signature name found without any info: {}\r", signature_name);
+                    }
+
+                    signature_name_found = false;
+                    info_line_found = false;
                 }
             }
         }
