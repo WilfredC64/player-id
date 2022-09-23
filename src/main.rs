@@ -13,8 +13,8 @@ use std::process::exit;
 use std::time::Instant;
 
 use rayon::prelude::*;
-use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 use self::config::Config;
+use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 
 const DEFAULT_FILENAME_COL_WIDTH: usize = 56;
 
