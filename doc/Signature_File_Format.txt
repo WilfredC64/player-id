@@ -31,7 +31,7 @@ to define a signature on multiple lines. If no END token is used, a signature
 definition ends at the end of the line. For version 1 of the file format the
 END token is required at the end of each signature.
 
-Signatures can be separated by an empty line or can be concatenated. A new
+Signatures can be separated by an empty line or can be put together. A new
 signature starts when the line specifies a signature name.
 
 Example:
@@ -184,5 +184,5 @@ REFERENCE: https://csdb.dk/release/?id=185248
   COMMENT: Originally developed for the Apple II and ported to other systems
            like the C64
 
-Info sections can be separated by an empty line or can be concatenated. A new
+Info sections can be separated by an empty line or can be put together. A new
 section starts when the line specifies a signature name.
