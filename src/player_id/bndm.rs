@@ -1,10 +1,10 @@
 // Copyright (C) 2019 - 2022 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
-use std::{cmp, mem};
+use std::cmp::min;
 
 const MASKS_TABLE_SIZE: usize = 256;
-const WORD_SIZE_IN_BITS: usize = mem::size_of::<usize>() * 8;
+const WORD_SIZE_IN_BITS: usize = usize::BITS as usize;
 
 pub struct BndmConfig {
     pub masks: [usize; MASKS_TABLE_SIZE],
@@ -97,7 +97,7 @@ fn find_remaining(source: &[u8], search_pattern: &[u8], wildcard: &Option<u8>) -
 }
 
 fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
-    cmp::min(search_pattern.len(), WORD_SIZE_IN_BITS)
+    min(search_pattern.len(), WORD_SIZE_IN_BITS)
 }
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize {

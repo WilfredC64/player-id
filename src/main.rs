@@ -6,7 +6,7 @@ mod player_id;
 
 #[path = "./utils/hvsc.rs"] mod hvsc;
 
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::collections::HashMap;
 use std::env;
 use std::process::exit;
@@ -85,7 +85,7 @@ fn run() -> Result<(), String> {
     let processed_files = files.len();
 
     let pool = rayon::ThreadPoolBuilder::new().num_threads(config.cpu_threads).build().unwrap();
-    let _ = pool.install(|| {
+    pool.install(|| {
         let matches: Vec<FileMatches> = files
             .par_iter()
             .map(|filename| {
@@ -167,10 +167,7 @@ fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatch
         let longest_filename = players_found.iter().max_by(|x, y| x.filename.len().cmp(&y.filename.len()));
         if let Some(longest_filename) = longest_filename {
             let filename_width = longest_filename.filename.len() - filename_strip_length;
-
-            if filename_width > DEFAULT_FILENAME_COL_WIDTH {
-                return filename_width;
-            }
+            return max(filename_width, DEFAULT_FILENAME_COL_WIDTH)
         }
     }
     DEFAULT_FILENAME_COL_WIDTH
@@ -209,9 +206,9 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
 }
 
 fn print_usage() {
-    println!("C64 Music Player Identifier (PI) v2.0 - Copyright (c) 2012-2022 Wilfred Bos\r");
-    println!("\r\nUsage: player-id <options> <file_path_pattern>\r");
-    println!("\r\n<Options>\r");
+    println!("C64 Music Player Identifier (PI) v2.0 - Copyright (c) 2012-2022 Wilfred Bos\r\n\r");
+    println!("Usage: player-id <options> <file_path_pattern>\r\n\r");
+    println!("<Options>\r");
     println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]\r");
     println!("  -f{{config_file}}: config file [Default SIDIDCFG env. var. / sidid.cfg file]\r");
     println!("  -h: scan HVSC location [Uses HVSC env. variable for HVSC path]\r");
