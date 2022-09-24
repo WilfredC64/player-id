@@ -65,7 +65,9 @@ impl Config {
         }
 
         if show_player_info {
-            Self::validate_player_info_option(show_player_info, &player_name)?;
+            Self::validate_player_info_option(show_player_info, player_name.as_ref())?;
+        } else {
+            Self::validate_player_name(player_name.as_ref())?;
         }
 
         Ok(Config {
@@ -86,14 +88,21 @@ impl Config {
         })
     }
 
-    fn validate_player_info_option(show_player_info: bool, player_name: &Option<String>) -> Result<(), String>{
-        if show_player_info && player_name.is_none() {
+    fn validate_player_info_option(show_player_info: bool, player_name: Option<&String>) -> Result<(), String> {
+        if show_player_info && (player_name.is_none() || player_name.unwrap().is_empty()) {
             return Err("Player info can only be used when -p option is provided with a player name.".to_string());
         }
         Ok(())
     }
 
-    fn set_hvsc_config(recursive: &mut bool, base_path: &mut String, filename: &mut String) -> Result<(), String>{
+    fn validate_player_name(player_name: Option<&String>) -> Result<(), String> {
+        if player_name.is_some() && player_name.unwrap().is_empty() {
+            return Err("Player name cannot be empty.".to_string());
+        }
+        Ok(())
+    }
+
+    fn set_hvsc_config(recursive: &mut bool, base_path: &mut String, filename: &mut String) -> Result<(), String> {
         if let Ok(hvsc_location) = env::var("HVSC") {
             *recursive = true;
             *base_path = hvsc_location;

@@ -42,17 +42,6 @@ impl PlayerId {
         Signature::find_signature_info(signature_infos, player_name)
     }
 
-    pub fn display_player_info(config_file: Option<String>, player_name: &str) -> Result<(), String> {
-        let player_infos = PlayerId::load_info_file(config_file)?;
-
-        if let Some(player_info) = Signature::find_signature_info(&player_infos, player_name) {
-            println!("Player info:\r\n\r\n{}\r\n{}\r", player_info.signature_name, player_info.info_lines.join("\r\n"));
-        } else {
-            eprintln!("No info found for player ID: {}\r", &player_name);
-        }
-        Ok(())
-    }
-
     pub fn is_config_file(filename: &str) -> bool {
         if let Ok(path) = PlayerId::get_config_path_with_fallback(filename) {
             Signature::is_config_file(&path)
@@ -61,30 +50,45 @@ impl PlayerId {
         }
     }
 
-    pub fn load_config_file(config_file: Option<String>, player_name: Option<String>) -> Result<Vec<SignatureConfig>, String> {
-        let config_path = PlayerId::get_config_path(config_file)?;
-        println!("Using config file: {}\r\n\r", config_path.display());
-
-        let sid_ids = Signature::read_config_file(&config_path, player_name)?;
+    pub fn load_config_file(config_path: &PathBuf, player_name: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
+        let sid_ids = Signature::read_config_file(config_path, player_name)?;
         if sid_ids.is_empty() {
-            return Err("No signature defined.".to_string());
+            return if player_name.is_none() {
+                Err("No signature defined.".to_string())
+            } else {
+                Err(format!("No signature found with name: {}", player_name.unwrap()))
+            }
         }
         Ok(sid_ids)
     }
 
-    pub fn load_info_file(config_file: Option<String>) -> Result<Vec<SignatureInfo>, String> {
-        let config_path_string = PlayerId::get_config_path(config_file)?.display().to_string().replace(".cfg", ".nfo");
-        let config_path = PlayerId::get_config_path_with_fallback(&config_path_string)?;
-        println!("Using info file: {}\r\n\r", config_path.display());
-
-        let sid_infos = Signature::read_info_file(&config_path)?;
+    pub fn load_info_file(config_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
+        let sid_infos = Signature::read_info_file(config_path)?;
         if sid_infos.is_empty() {
-            return Err("No signature defined.".to_string());
+            return Err("No info sections defined.".to_string());
         }
         Ok(sid_infos)
     }
 
-    pub fn verify_signatures(config_file: Option<String>) -> Result<bool, String> {
+    pub fn get_info_file_path(config_file: Option<&String>) -> Result<PathBuf, String> {
+        let config_path_string = PlayerId::get_config_path(config_file)?.display().to_string().replace(".cfg", ".nfo");
+        PlayerId::get_config_path_with_fallback(&config_path_string)
+    }
+
+    pub fn get_config_path(config_file: Option<&String>) -> Result<PathBuf, String> {
+        let config_file = if let Some(config_file) = config_file {
+            if config_file.is_empty() {
+                return Err("No filename provided for config file.".to_string());
+            }
+            config_file.to_string()
+        } else {
+            env::var("SIDIDCFG").unwrap_or_else(|_| DEFAULT_CONFIG_FILE_NAME.to_string())
+        };
+
+        PlayerId::get_config_path_with_fallback(&config_file)
+    }
+
+    pub fn verify_signatures(config_file: Option<&String>) -> Result<bool, String> {
         eprintln!("Checking signatures...\r");
 
         let config_path = PlayerId::get_config_path(config_file)?;
@@ -98,7 +102,7 @@ impl PlayerId {
         Ok(issues_found)
     }
 
-    pub fn verify_signature_info(config_file: Option<String>) -> Result<bool, String> {
+    pub fn verify_signature_info(config_file: Option<&String>) -> Result<bool, String> {
         eprintln!("\r\nChecking info file...\r");
 
         let config_path = PlayerId::get_config_path(config_file)?;
@@ -135,29 +139,9 @@ impl PlayerId {
         Err(format!("File doesn't exist: {}", filename))
     }
 
-    fn get_config_path(config_file: Option<String>) -> Result<PathBuf, String> {
-        let config_file = if let Some(config_file) = config_file {
-            if config_file.is_empty() {
-                return Err("Invalid config filename. No space allowed after -f switch.".to_string());
-            }
-            config_file
-        } else {
-            let config_file = env::var("SIDIDCFG");
-            if let Ok(config_file) = config_file {
-                config_file
-            } else {
-                DEFAULT_CONFIG_FILE_NAME.to_string()
-            }
-        };
-
-        let config_path = PlayerId::get_config_path_with_fallback(&config_file)?;
-        Ok(config_path)
-    }
-
     fn read_file(filename: &str) -> std::io::Result<Vec<u8>> {
-        let mut file = File::open(filename)?;
         let mut data = vec![];
-        file.read_to_end(&mut data)?;
+        File::open(filename)?.read_to_end(&mut data)?;
         Ok(data)
     }
 }

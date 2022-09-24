@@ -42,11 +42,11 @@ fn run() -> Result<(), String> {
     let config = Config::read()?;
 
     if config.verify_signatures {
-        PlayerId::verify_signatures(config.config_file.clone())?;
-        PlayerId::verify_signature_info(config.config_file)?;
+        PlayerId::verify_signatures(config.config_file.as_ref())?;
+        PlayerId::verify_signature_info(config.config_file.as_ref())?;
         return Ok(());
     } else if config.show_player_info {
-        PlayerId::display_player_info(config.config_file, &config.player_name.unwrap())?;
+        display_player_info(&config)?;
         return Ok(());
     }
 
@@ -57,22 +57,9 @@ fn run() -> Result<(), String> {
     eprintln!("Processing...\r");
 
     let start_time = Instant::now();
-    let signature_ids = PlayerId::load_config_file(config.config_file, config.player_name)?;
 
-    let max_depth = if config.recursive { usize::MAX } else { 1 };
-
-    let files = if !config.filename.is_empty() {
-        globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
-            .max_depth(max_depth)
-            .case_insensitive(true)
-            .build().unwrap()
-            .into_iter()
-            .filter_map(Result::ok)
-            .map(|p| p.path().display().to_string())
-            .collect::<Vec<String>>()
-    } else {
-        vec![]
-    };
+    let signature_ids = load_signatures(&config)?;
+    let files = get_matched_filenames(&config);
 
     if files.is_empty() {
         eprintln!("No file(s) found.\r");
@@ -82,7 +69,6 @@ fn run() -> Result<(), String> {
     let mut identified_players = 0;
     let mut identified_files = 0;
     let mut unidentified_files = 0;
-    let processed_files = files.len();
 
     let pool = rayon::ThreadPoolBuilder::new().num_threads(config.cpu_threads).build().unwrap();
     pool.install(|| {
@@ -105,7 +91,7 @@ fn run() -> Result<(), String> {
         let filename_width = calculate_filename_width(config.truncate_filenames, &matches, filename_strip_length);
 
         for file_matches in &matches {
-            let filename = file_matches.filename[filename_strip_length..].to_string();
+            let filename = &file_matches.filename[filename_strip_length..];
             let filename_size = if config.truncate_filenames {
                 min(filename.len(), filename_width)
             } else {
@@ -127,6 +113,7 @@ fn run() -> Result<(), String> {
                     } else {
                         player.signature_name.to_string()
                     };
+
                     if index == 0 {
                         println!("{:<0width$} {}\r", filename[..filename_size].replace('\\', "/"), player_name, width = filename_width);
                     } else {
@@ -137,7 +124,7 @@ fn run() -> Result<(), String> {
         }
 
         if identified_files > 0 {
-            unidentified_files = processed_files - identified_files;
+            unidentified_files = files.len() - identified_files;
 
             output_occurrence_statistics(&signature_ids, &matches);
         }
@@ -147,7 +134,7 @@ fn run() -> Result<(), String> {
     println!("Identified players    {:>9}\r", identified_players);
     println!("Identified files      {:>9}\r", identified_files);
     println!("Unidentified files    {:>9}\r", unidentified_files);
-    println!("Total files processed {:>9}\r", processed_files);
+    println!("Total files processed {:>9}\r", files.len());
 
     output_elapsed_time(start_time);
     Ok(())
@@ -160,26 +147,6 @@ fn output_elapsed_time(start_time: Instant) {
     let minutes = time_seconds / 60 % 60;
     let hours = time_seconds / 60 / 60;
     eprintln!("\r\nTotal time: {:0>2}:{:0>2}:{:0>2} (+{} milliseconds)\r", hours, minutes, seconds, time_millis % 1000);
-}
-
-fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
-    if !truncate_filenames {
-        let longest_filename = players_found.iter().max_by(|x, y| x.filename.len().cmp(&y.filename.len()));
-        if let Some(longest_filename) = longest_filename {
-            let filename_width = longest_filename.filename.len() - filename_strip_length;
-            return max(filename_width, DEFAULT_FILENAME_COL_WIDTH)
-        }
-    }
-    DEFAULT_FILENAME_COL_WIDTH
-}
-
-fn get_filename_strip_length(base_path: String, files: &[String]) -> usize {
-    if let Some(first_file) = files.first() {
-        if let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
-            return hvsc_root.len() + 1
-        }
-    }
-    if base_path.eq(".") { 2 } else { 0 }
 }
 
 fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_info: &Vec<FileMatches>) {
@@ -203,6 +170,65 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
             }
         }
     }
+}
+
+fn load_signatures(config: &Config) -> Result<Vec<SignatureConfig>, String> {
+    let config_path = PlayerId::get_config_path(config.config_file.as_ref())?;
+    println!("Using config file: {}\r\n\r", config_path.display());
+
+    PlayerId::load_config_file(&config_path, config.player_name.as_ref())
+}
+
+fn get_matched_filenames(config: &Config) -> Vec<String> {
+    let max_depth = if config.recursive { usize::MAX } else { 1 };
+
+    if !config.filename.is_empty() {
+        globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
+            .max_depth(max_depth)
+            .case_insensitive(true)
+            .build().unwrap()
+            .into_iter()
+            .filter_map(Result::ok)
+            .map(|p| p.path().display().to_string())
+            .collect::<Vec<String>>()
+    } else {
+        vec![]
+    }
+}
+
+fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
+    if !truncate_filenames {
+        let longest_filename = players_found.iter().max_by(|x, y| x.filename.len().cmp(&y.filename.len()));
+        if let Some(longest_filename) = longest_filename {
+            let filename_width = longest_filename.filename.len() - filename_strip_length;
+            return max(filename_width, DEFAULT_FILENAME_COL_WIDTH)
+        }
+    }
+    DEFAULT_FILENAME_COL_WIDTH
+}
+
+fn get_filename_strip_length(base_path: String, files: &[String]) -> usize {
+    if let Some(first_file) = files.first() {
+        if let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
+            return hvsc_root.len() + 1
+        }
+    }
+    if base_path.eq(".") { 2 } else { 0 }
+}
+
+fn display_player_info(config: &Config) -> Result<(), String> {
+    let config_path = PlayerId::get_info_file_path(config.config_file.as_ref())?;
+    println!("Using info file: {}\r\n\r", config_path.display());
+
+    let player_infos = PlayerId::load_info_file(&config_path)?;
+    let player_name = config.player_name.as_ref().unwrap();
+
+    if let Some(player_info) = PlayerId::find_player_info(&player_infos, player_name) {
+        println!("Player info:\r\n\r\n{}\r\n{}\r", player_info.signature_name, player_info.info_lines.join("\r\n"));
+    } else {
+        eprintln!("No info found for player ID: {}\r", &player_name);
+    }
+    Ok(())
 }
 
 fn print_usage() {

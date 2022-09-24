@@ -75,12 +75,11 @@ impl Signature {
         signature_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(signature_name)).cloned()
     }
 
-    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<String>) -> Result<Vec<SignatureConfig>, String> {
+    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
         if !Self::is_config_file(file_path) {
             return Err("Not a config file.".to_string());
         }
 
-        let signature_name_to_filter = signature_name_to_filter.unwrap_or_default();
         let mut signatures = vec![];
 
         if let Ok(lines) = Self::read_lines(file_path) {
@@ -92,20 +91,20 @@ impl Signature {
 
                 if Self::is_signature_min_length(signature_text) {
                     if Self::is_signature_name(signature_text) {
-                        Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+                        Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         signature_name = signature_text.to_string();
                     } else {
                         signature_lines.push(signature_text.to_string());
                         if signature_text.len() >= 3 && signature_text.as_bytes()[signature_text.len() - 3..].eq_ignore_ascii_case(b"END") {
-                            Self::process_single_signature(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+                            Self::process_single_signature(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         }
                     }
                 } else {
-                    Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+                    Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                     signature_name = "".to_string();
                 }
             }
-            Self::process_multi_signatures(&signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+            Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         }
 
         Ok(signatures)
@@ -123,7 +122,7 @@ impl Signature {
             let mut info_lines = vec![];
             for line in lines.flatten() {
                 if Self::is_signature_min_length(&line) {
-                    if Self::is_info_tag(&line){
+                    if Self::is_info_tag(&line) {
                         info_lines.push(line);
                     } else if Self::is_signature_name(&line) {
                         if !signature_name.is_empty() {
@@ -205,21 +204,21 @@ impl Signature {
         false
     }
 
-    fn process_multi_signatures(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
+    fn process_multi_signatures(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
         for signature_line in &*signature_lines {
             Self::process_signature_line(signature_name_to_filter, signatures, signature_name, signature_line);
         }
         signature_lines.clear();
     }
 
-    fn process_single_signature(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
+    fn process_single_signature(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
         Self::process_signature_line(signature_name_to_filter, signatures, signature_name, &signature_lines.join(" "));
         signature_lines.clear();
     }
 
-    fn process_signature_line(signature_name_to_filter: &str, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_text: &str) {
+    fn process_signature_line(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_text: &str) {
         let signature = Self::process_signature_value(signature_name, signature_text);
-        if signature_name_to_filter.is_empty() || signature_name_to_filter.eq_ignore_ascii_case(signature_name) {
+        if signature_name_to_filter.is_none() || signature_name_to_filter.unwrap().eq_ignore_ascii_case(signature_name) {
             signatures.push(signature);
         }
     }
@@ -549,7 +548,7 @@ impl Signature {
             eprintln!("Invalid signature found. Signature value should have at least 2 values separated with a space: {}\r", signature_name);
         }
 
-        if signature_text_without_end.ends_with(" AND") || signature_text_without_end.ends_with(" &&"){
+        if signature_text_without_end.ends_with(" AND") || signature_text_without_end.ends_with(" &&") {
             error = true;
             eprintln!("Signature should not end with an AND or && operator: {}\r", signature_name);
         }
