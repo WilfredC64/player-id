@@ -49,7 +49,7 @@ impl Signature {
                 let index = find_pattern(&source[last_index..], config);
                 if let Some(index) = index {
                     index_found = true;
-                    indexes.push(last_index + index - start_offset);
+                    indexes.push(last_index + index);
                     last_index += index + config.pattern.len();
                 } else {
                     index_found = false;
