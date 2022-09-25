@@ -8,6 +8,8 @@ use std::path::PathBuf;
 
 use encoding_rs::WINDOWS_1252;
 use encoding_rs_io::{DecodeReaderBytesBuilder, DecodeReaderBytes};
+use str_utils::*;
+use substring::Substring;
 
 use super::bndm::{BndmConfig, find_pattern};
 
@@ -36,7 +38,6 @@ pub struct Signature {}
 impl Signature {
     pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         let mut matches = vec![];
-
         let mut signature_names_added = HashMap::new();
 
         for signature in signatures {
@@ -67,7 +68,6 @@ impl Signature {
                 }
             }
         }
-
         matches
     }
 
@@ -95,7 +95,7 @@ impl Signature {
                         signature_name = signature_text.to_string();
                     } else {
                         signature_lines.push(signature_text.to_string());
-                        if signature_text.len() >= 3 && signature_text.as_bytes()[signature_text.len() - 3..].eq_ignore_ascii_case(b"END") {
+                        if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
                             Self::process_single_signature(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                         }
                     }
@@ -106,7 +106,6 @@ impl Signature {
             }
             Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         }
-
         Ok(signatures)
     }
 
@@ -146,7 +145,6 @@ impl Signature {
                 signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
             }
         }
-
         Ok(signature_infos)
     }
 
@@ -235,7 +233,7 @@ impl Signature {
                         Self::add_signature(&signature, &mut bndm_configs);
                         signature.clear();
                     },
-                    _ => signature.push(Self::convert_hex_to_bin(&word[..2]))
+                    _ => signature.push(Self::convert_hex_to_bin(word.substring(0, 2)))
                 }
             }
         }
@@ -253,18 +251,18 @@ impl Signature {
 
     fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
-            let signature_first_11bytes = &signature_text_line.as_bytes()[..11];
-            return (signature_first_11bytes[9] == b':' && signature_first_11bytes[10] == b' ') ||
-                signature_first_11bytes.eq(b"           ");
+            let signature_first_11chars = &signature_text_line.substring(0, 11).as_bytes();
+            return (signature_first_11chars[9] == b':' && signature_first_11chars[10] == b' ') ||
+                signature_first_11chars.eq(b"           ");
         }
         false
     }
 
     fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
-            let signature_first_3bytes = &signature_text_line.as_bytes()[0..3];
-            return signature_first_3bytes[2] != b' ' &&
-                (signature_text_line.len() > 3 || (!signature_first_3bytes.eq_ignore_ascii_case(b"END") && !signature_first_3bytes.eq_ignore_ascii_case(b"AND")));
+            let signature_first_3chars = &signature_text_line.substring(0, 3).as_bytes();
+            return signature_first_3chars[2] != b' ' &&
+                (signature_text_line.len() > 3 || signature_first_3chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none());
         }
         false
     }
@@ -301,7 +299,6 @@ impl Signature {
                 if wildcard == SIGNATURE_MAX_VALUE {
                     return (true, None);
                 }
-
             }
         }
 
@@ -370,7 +367,7 @@ impl Signature {
                         }
 
                         signature_lines.push(signature_text.to_string());
-                        if signature_text.len() >= 3 && signature_text.as_bytes()[signature_text.len() - 3..].eq_ignore_ascii_case(b"END") {
+                        if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
                             error |= Self::validate_signature_value(&signature_name, &signature_lines.join(" "));
                             signature_lines.clear();
                         }
@@ -412,7 +409,6 @@ impl Signature {
             error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
             error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
         }
-
         Ok(error)
     }
 
@@ -497,7 +493,6 @@ impl Signature {
                 eprintln!("Signature ID not found in config file: {}\r", signature_name.0);
             }
         }
-
         Ok(error)
     }
 
@@ -559,7 +554,6 @@ impl Signature {
                 error |= Self::validate_signature_range(signature_name, signature);
             }
         }
-
         error
     }
 
