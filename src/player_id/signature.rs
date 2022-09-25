@@ -228,14 +228,14 @@ impl Signature {
         let mut bndm_configs = vec![];
 
         for word in signature_text.to_ascii_uppercase().split_ascii_whitespace() {
-            if !word.is_empty() {
+            if word.len() >= 2 {
                 match word {
                     "??" => signature.push(CMD_WILDCARD),
                     "AND" | "&&" | "END" => {
                         Self::add_signature(&signature, &mut bndm_configs);
                         signature.clear();
                     },
-                    _ => signature.push(Self::convert_hex_to_bin(word))
+                    _ => signature.push(Self::convert_hex_to_bin(&word[..2]))
                 }
             }
         }
@@ -394,6 +394,7 @@ impl Signature {
                     }
 
                     if line.is_empty() && last_empty_line_number == line_number - 1 {
+                        error = true;
                         eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
                     }
 
