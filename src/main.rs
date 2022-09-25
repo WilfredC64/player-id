@@ -130,7 +130,7 @@ fn run() -> Result<(), String> {
         }
     });
 
-    println!("\r\nSummary:\r");
+    println!("Summary:\r");
     println!("Identified players    {:>9}\r", identified_players);
     println!("Identified files      {:>9}\r", identified_files);
     println!("Unidentified files    {:>9}\r", unidentified_files);
@@ -170,6 +170,8 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
             }
         }
     }
+
+    println!("\r");
 }
 
 fn load_signatures(config: &Config) -> Result<Vec<SignatureConfig>, String> {
