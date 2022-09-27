@@ -3,8 +3,10 @@
 
 mod config;
 mod player_id;
-
 #[path = "./utils/hvsc.rs"] mod hvsc;
+
+use self::config::Config;
+use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 
 use std::cmp::{max, min};
 use std::collections::HashMap;
@@ -13,8 +15,6 @@ use std::process::exit;
 use std::time::Instant;
 
 use rayon::prelude::*;
-use self::config::Config;
-use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 
 const DEFAULT_FILENAME_COL_WIDTH: usize = 56;
 
@@ -91,7 +91,12 @@ fn run() -> Result<(), String> {
         let filename_width = calculate_filename_width(config.truncate_filenames, &matches, filename_strip_length);
 
         for file_matches in &matches {
-            let filename = &file_matches.filename[filename_strip_length..];
+            let filename = if file_matches.filename.len() > filename_strip_length {
+                &file_matches.filename[filename_strip_length..]
+            } else {
+                &file_matches.filename
+            };
+
             let filename_size = if config.truncate_filenames {
                 min(filename.len(), filename_width)
             } else {
@@ -123,9 +128,9 @@ fn run() -> Result<(), String> {
             }
         }
 
-        if identified_files > 0 {
-            unidentified_files = files.len() - identified_files;
+        unidentified_files = files.len() - identified_files;
 
+        if identified_files > 0 {
             output_occurrence_statistics(&signature_ids, &matches);
         }
     });
