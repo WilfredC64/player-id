@@ -3,9 +3,9 @@
 
 #![allow(dead_code)]
 
-#[path = "./utils/sid_file.rs"] mod sid_file;
 mod bndm;
 mod signature;
+#[path = "./utils/sid_file.rs"] mod sid_file;
 
 use std::env;
 use std::fs::File;
