@@ -137,13 +137,18 @@ impl Config {
     }
 
     fn split_file_path(filename: &str) -> (String, String) {
-        let mut index = filename.rfind('/');
-        if index.is_none() {
-            index = filename.rfind('\\');
-        }
-        if let Some(index) = index {
-            return (filename[..index].to_owned(), filename[index + 1..].to_owned())
+        let filename_unix = filename.replace('\\', "/");
+        if let Some(index) = filename_unix.rfind('/') {
+            return match index {
+                0 => (filename[..1].to_string(), filename[1..].to_owned()),
+                x if x > 1 && filename_unix.starts_with("./") => (filename[2..index].to_owned(), filename[index + 1..].to_owned()),
+                _ => (filename[..index].to_owned(), filename[index + 1..].to_owned())
+            }
         }
         (".".to_string(), filename.to_string())
     }
 }
+
+#[cfg(test)]
+#[path = "./config_test.rs"]
+mod config_test;
