@@ -285,7 +285,7 @@ REFERENCE: https://csdb.dk/release/?id=118363
 DefleMask_v12
    AUTHOR: Leonardo Demartino (Delek)
  RELEASED: 2016
-REFERENCE: http://www.deflemask.com/
+REFERENCE: https://www.deflemask.com/
 
 DefMon
    AUTHOR: Mats (Frantic of Hack'n'Trade)
@@ -785,7 +785,6 @@ Kawasaki_Synthesizer
      NAME: Kawasaki Synthesizer
    AUTHOR: Ryo Kawasaki
  RELEASED: 1983 Sight & Sound Music Software
-  COMMENT: More info: http://www.ryokawasaki.com/c64/
 
 KB/SDS
    AUTHOR: Tammo Hinrichs (kb) of Smash Designs (SDS)
@@ -1342,7 +1341,6 @@ REFERENCE: https://csdb.dk/release/?id=33248
 SidTracker64
    AUTHOR: Daniel Larsson (Pernod)
  RELEASED: 2015
-REFERENCE: http://www.sidtracker64.com
 
 SidWinder
    AUTHOR: Balázs Takács (Taki)
