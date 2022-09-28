@@ -156,23 +156,23 @@ one of the tags should be present for a signature. The tag is followed by a
 colon and a space. All the colons should be aligned, see example below.
 
 NAME
-The full name of the player or editor.
+  The full name of the player or editor.
 
 AUTHOR
-The author(s) of the player or editor.
+  The author(s) of the player or editor.
 
 RELEASED
-Includes the first release year of the player/editor, if known, and it may
-be followed with the publisher, group or author that released it.
+  Includes the first release year of the player/editor, if known, and it may
+  be followed with the publisher, group or author that released it.
 
 REFERENCE
-This is a URL of the release of the player or editor. It can only have one
-URL. If more references are known, it is common to put the reference of the
-first known release.
+  This is a URL of the release of the player or editor. It can only have one
+  URL. If more references are known, it is common to put the reference of the
+  first known release.
 
 COMMENT
-Includes extra information about the player/editor. This tag can contain
-multiple lines. The lines should be aligned and padded with spaces.
+  Includes extra information about the player/editor. This tag can contain
+  multiple lines. The lines should be aligned and padded with spaces.
 
 Example of an info section:
 
