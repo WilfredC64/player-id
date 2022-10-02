@@ -39,51 +39,62 @@ fn find_small_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     let len = config.pattern.len() - 1;
     let end = source.len() - len;
     let masks = &config.masks;
+    let df = 1 << len;
     let mut i = 0;
 
     while i < end {
         let mut j = len;
+        let mut last = len;
 
         let mut d = masks[source[i + j] as usize];
         d = (d << 1) & masks[source[i + j - 1] as usize];
         while d != 0 {
             j -= 1;
-            if j == 0 {
-                return Some(i);
+            if d & df != 0 {
+                if j == 0 {
+                    return Some(i);
+                }
+                last = j;
             }
             d = (d << 1) & masks[source[i + j - 1] as usize];
         }
 
-        i += j;
+        i += last;
     }
     None
 }
 
 /// finds patterns larger than CPU word size
 fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
-    let len = config.pattern.len() - 1;
-    let end = source.len() - len;
+    let len = WORD_SIZE_IN_BITS - 1;
+    let end = source.len() - (config.pattern.len() - 1);
     let masks = &config.masks;
     let pattern = &config.pattern;
     let wildcard = &config.wildcard;
+    let df = 1 << len;
     let mut i = 0;
 
     while i < end {
-        let mut j = WORD_SIZE_IN_BITS - 1;
+        let mut j = len;
+        let mut last = len;
 
         let mut d = masks[source[i + j] as usize];
         d = (d << 1) & masks[source[i + j - 1] as usize];
         while d != 0 {
             j -= 1;
-            if j == 0 {
-                if find_remaining(&source[i + WORD_SIZE_IN_BITS..], &pattern[WORD_SIZE_IN_BITS..], wildcard) {
-                    return Some(i);
+            if d & df != 0 {
+                if j == 0 {
+                    if find_remaining(&source[i + WORD_SIZE_IN_BITS..], &pattern[WORD_SIZE_IN_BITS..], wildcard) {
+                        return Some(i);
+                    }
+                    j += 1;
                 }
-                j += 1;
+                last = j;
             }
             d = (d << 1) & masks[source[i + j - 1] as usize];
         }
-        i += j;
+
+        i += last;
     }
     None
 }

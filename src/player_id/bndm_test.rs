@@ -479,3 +479,63 @@ fn find_small_pattern_with_wildcard_no_match() {
 
     assert_eq!(index, None);
 }
+
+#[test]
+fn find_small_pattern_skip_window() {
+    let source = b"aaaaaaaaaaaaaaabbbbbbbbabcbbbbbcbbbbbbbbbbbcbbbbbbbbbbbbb";
+    let pattern = b"bbbbbbcbbbbbbbbbbbb";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(37));
+}
+
+#[test]
+fn find_small_pattern_skip_window_no_match() {
+    let source = b"baaaaabbbbbbbbbbbaaaaaaaaaaaaaaa";
+    let pattern = b"aaaaabbbbbbbbbbbbaaaaa";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, None);
+}
+
+#[test]
+fn find_small_pattern_skip_window_match() {
+    let source = b"baaaaabbbbbbbbbbbaaaaaaabbbbbbbbbbbbaaaaaaacccccaaaaaa";
+    let pattern = b"aaaaabbbbbbbbbbbbaaaaa";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(19));
+}
+
+#[test]
+fn find_small_pattern_skip_window_match_immediate() {
+    let source = b"bbbaaaaabbbbbbbbbbbccaaaaabbbbbbbbbbbbccccc";
+    let pattern = b"aaaaabbbbbbbbbbbbccccc";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(21));
+}
+
+#[test]
+fn find_small_pattern_skip_window_match_longest_suffix() {
+    let source = b"bbbaaaaabbbbbbbbbbbcccaaaaabbbbbbbbbbbbccccc";
+    let pattern = b"aaaaabbbbbbbbbbbbccccc";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(22));
+}
+
+#[test]
+fn find_small_pattern_skip_window_match_longest_suffix_long_pattern() {
+    let source = b"bbbaaaaabbbbbbbbbbbcccaaaaabbbbbbbbbcccccaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccddd";
+    let pattern = b"aaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbccccc";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(41));
+}
