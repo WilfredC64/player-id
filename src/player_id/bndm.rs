@@ -101,9 +101,9 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
 
 fn find_remaining(source: &[u8], search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
     if let Some(wildcard) = wildcard {
-        search_pattern.iter().enumerate().all(|(index, pattern_byte)| source[index] == *pattern_byte || *pattern_byte == *wildcard)
+        search_pattern.iter().enumerate().rev().all(|(index, pattern_byte)| source[index] == *pattern_byte || *pattern_byte == *wildcard)
     } else {
-        search_pattern.iter().enumerate().all(|(index, pattern_byte)| source[index] == *pattern_byte)
+        search_pattern.iter().enumerate().rev().all(|(index, pattern_byte)| source[index] == *pattern_byte)
     }
 }
 
