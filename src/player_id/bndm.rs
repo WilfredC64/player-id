@@ -116,15 +116,9 @@ fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize
 
     if let Some(wildcard) = wildcard {
         let len = get_pattern_length_within_cpu_word(search_pattern);
-        if len > 0 {
-            let bit_select = 1 << (len - 1);
 
-            for (i, pattern_byte) in search_pattern.iter().enumerate().take(len) {
-                if *pattern_byte == wildcard {
-                    mask |= bit_select >> i;
-                }
-            }
-        }
+        search_pattern.iter().take(len).rev().enumerate()
+            .for_each(|(i, pattern_byte)| mask |= ((*pattern_byte == wildcard) as usize) << i);
     }
     mask
 }
@@ -133,11 +127,10 @@ fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_T
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
 
     let len = get_pattern_length_within_cpu_word(search_pattern);
-    if len > 0 {
-        let bit_select = 1 << (len - 1);
 
-        search_pattern.iter().enumerate().take(len).for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= bit_select >> i);
-    }
+    search_pattern.iter().take(len).rev().enumerate()
+        .for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= 1 << i);
+
     masks
 }
 
