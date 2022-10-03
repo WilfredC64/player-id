@@ -117,8 +117,8 @@ fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize
     if let Some(wildcard) = wildcard {
         let len = get_pattern_length_within_cpu_word(search_pattern);
 
-        search_pattern.iter().take(len).rev().enumerate()
-            .for_each(|(i, pattern_byte)| mask |= ((*pattern_byte == wildcard) as usize) << i);
+        search_pattern.iter().take(len)
+            .for_each(|pattern_byte| mask = mask << 1 | (*pattern_byte == wildcard) as usize);
     }
     mask
 }
