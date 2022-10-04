@@ -38,29 +38,25 @@ pub struct Signature {}
 impl Signature {
     pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         let mut matches = vec![];
-        let mut signature_names_added = HashMap::new();
 
         for signature in signatures {
-            let configs = &signature.bndm_configs;
             let mut indexes = vec![];
-
-            let mut index_found = false;
             let mut last_index = start_offset;
-            for config in configs {
+            let mut index_found = true;
+
+            for config in  &signature.bndm_configs {
                 let index = find_pattern(&source[last_index..], config);
+
                 if let Some(index) = index {
-                    index_found = true;
                     indexes.push(last_index + index);
                     last_index += index + config.pattern.len();
                 } else {
                     index_found = false;
-                    indexes.clear();
                     break;
                 }
             }
 
-            if index_found && !signature_names_added.contains_key(&signature.signature_name) {
-                signature_names_added.insert(signature.signature_name.to_owned(), true);
+            if index_found {
                 matches.push(SignatureMatch { signature_name: signature.signature_name.to_owned(), indexes });
 
                 if !scan_for_multiple {
@@ -68,6 +64,7 @@ impl Signature {
                 }
             }
         }
+        matches.dedup_by(|a, b| a.signature_name.eq(&b.signature_name));
         matches
     }
 
@@ -150,14 +147,7 @@ impl Signature {
 
     pub fn is_config_file(filename: &PathBuf) -> bool {
         if let Ok(file) = File::open(filename) {
-            let reader = BufReader::new(
-                DecodeReaderBytesBuilder::new()
-                    .encoding(Some(WINDOWS_1252))
-                    .build(file));
-            let chunk = reader.take(1000);
-            let lines = chunk.lines()
-                .map(|line| line.unwrap_or_default())
-                .collect::<Vec<_>>();
+            let lines = Self::get_first_few_lines_from_file(file);
             let mut lines_iter = lines.iter();
 
             while let Some(line) = lines_iter.next() {
@@ -177,14 +167,7 @@ impl Signature {
 
     fn is_info_file(filename: &PathBuf) -> bool {
         if let Ok(file) = File::open(filename) {
-            let reader = BufReader::new(
-                DecodeReaderBytesBuilder::new()
-                    .encoding(Some(WINDOWS_1252))
-                    .build(file));
-            let chunk = reader.take(1000);
-            let lines = chunk.lines()
-                .map(|line| line.unwrap_or_default())
-                .collect::<Vec<_>>();
+            let lines = Self::get_first_few_lines_from_file(file);
             let mut lines_iter = lines.iter();
 
             while let Some(line) = lines_iter.next() {
@@ -200,6 +183,17 @@ impl Signature {
             }
         }
         false
+    }
+
+    fn get_first_few_lines_from_file(file: File) -> Vec<String> {
+        let reader = BufReader::new(
+            DecodeReaderBytesBuilder::new()
+                .encoding(Some(WINDOWS_1252))
+                .build(file));
+        let chunk = reader.take(1000);
+        chunk.lines()
+            .map(|line| line.unwrap_or_default())
+            .collect::<Vec<_>>()
     }
 
     fn process_multi_signatures(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
