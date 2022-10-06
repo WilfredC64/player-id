@@ -91,7 +91,7 @@ impl PlayerId {
             }
             config_file.to_string()
         } else {
-            env::var("SIDIDCFG").unwrap_or_else(|_| DEFAULT_CONFIG_FILE_NAME.to_string())
+            DEFAULT_CONFIG_FILE_NAME.to_string()
         };
 
         PlayerId::get_config_path_with_fallback(&config_file)

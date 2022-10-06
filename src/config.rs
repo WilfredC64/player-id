@@ -67,6 +67,10 @@ impl Config {
             Self::set_hvsc_config(&mut recursive, &mut base_path, &mut filename)?;
         }
 
+        if config_file.is_none() {
+            config_file = env::var("SIDIDCFG").ok();
+        }
+
         if show_player_info {
             Self::validate_player_info_option(show_player_info, player_name.as_ref())?;
         } else {
