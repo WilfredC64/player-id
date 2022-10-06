@@ -110,6 +110,14 @@ identified. All files that are scanned will be listed.
 useful when you create your own signatures. This option will also verify the
 info file <nobr>(sidid.nfo)</nobr> when it's found.
 
+**-wn**: write signatures in new format
+
+> Use the -wn option if you want to write a signatures file to the new file format (V2).
+
+**-wo**: write signatures in old format
+
+> Use the -wo option if you want to write a signatures file to the old file format (V1).
+
 **-x**: display hexadecimal offset of signature found
 
 > Use the -x option if you want to display the hexadecimal offset where the
