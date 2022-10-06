@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 pub const MIN_SID_HEADER_SIZE: usize = 0x76;
-pub const MAX_SID_HEADER_SIZE: usize = 0x100;
 
 const DATA_OFFSET_OFFSET: usize = 0x06;
 const LOAD_ADDRESS_OFFSET: usize = 0x08;
