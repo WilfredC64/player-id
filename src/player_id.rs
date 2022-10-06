@@ -5,13 +5,13 @@
 
 mod bndm;
 mod signature;
-#[path = "./utils/sid_file.rs"] mod sid_file;
 
-use std::env;
+use std::{env, fs};
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+use super::sid_file;
 use signature::{Signature};
 pub use signature::{SignatureConfig, SignatureInfo, SignatureMatch};
 
@@ -86,6 +86,76 @@ impl PlayerId {
         };
 
         PlayerId::get_config_path_with_fallback(&config_file)
+    }
+
+    pub fn convert_file_format(config_file: Option<&String>, new_format: bool) -> Result<(), String> {
+        let issues_found = Self::verify_signatures(config_file)?;
+        if issues_found {
+            return Err("Issues found in config file.".to_string());
+        }
+
+        if new_format {
+            eprintln!("\r\nWriting signatures in new format.\r");
+        } else {
+            eprintln!("\r\nWriting signatures in old format.\r");
+        }
+
+        let config_path = PlayerId::get_config_path(config_file)?;
+        eprintln!("Writing config file to: {}\r", config_path.display());
+
+        let sid_ids = Signature::read_config_file(&config_path, None)?;
+        let output_string = Self::convert_ids_to_string(sid_ids, new_format);
+
+        let write_result = fs::write(config_path, output_string);
+        if let Err(write_error) = write_result {
+            return Err(format!("Error writing config file: {}", write_error));
+        }
+
+        eprintln!("Done!\r");
+        Ok(())
+    }
+
+    fn convert_ids_to_string(sid_ids: Vec<SignatureConfig>, new_format: bool) -> String {
+        let mut output_strings = vec![];
+        let mut previous_signature_name = "".to_string();
+
+        for sid_id in sid_ids {
+            if sid_id.signature_name.ne(&previous_signature_name) {
+                if !output_strings.is_empty() && !sid_id.signature_name.starts_with('(') {
+                    output_strings.push("\r\n".to_string() + &sid_id.signature_name);
+                } else {
+                    output_strings.push(sid_id.signature_name.to_owned());
+                }
+            }
+
+            previous_signature_name = sid_id.signature_name;
+            let mut output_string = "".to_string();
+
+            for bndm_config in sid_id.bndm_configs {
+                if !output_string.is_empty() {
+                    output_string += if new_format { " && " } else { " AND " };
+                }
+
+                output_string += &bndm_config.pattern.iter()
+                    .map(|b| {
+                        if let Some(wildcard) = bndm_config.wildcard {
+                            if *b == wildcard {
+                                return "??".to_string();
+                            }
+                        }
+                        format!("{:02X}", b)
+                    })
+                    .collect::<Vec<String>>()
+                    .join(" ");
+            }
+
+            if !new_format {
+                output_string += " END";
+            }
+
+            output_strings.push(output_string);
+        }
+        output_strings.join("\r\n")
     }
 
     pub fn verify_signatures(config_file: Option<&String>) -> Result<bool, String> {

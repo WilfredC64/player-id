@@ -337,27 +337,19 @@ impl Signature {
 
                         signature_name = signature_text.to_string();
 
-                        if signature_name.eq_ignore_ascii_case("END") ||
-                            signature_name.eq_ignore_ascii_case("AND") {
-                            error = true;
-                            eprintln!("Signature name cannot be a reserved word: {}\r", signature_name);
-                        }
-
-                        if signature_name.contains(' ') {
-                            error = true;
-                            eprintln!("Signature name contains spaces or invalid signature value: {}\r", signature_name);
-                        }
-
-                        if signature_names_added.contains_key(&signature_name.to_ascii_uppercase()) {
-                            error = true;
-                            eprintln!("Signature defined more than once or with different casing: {}\r", signature_name);
-                        }
+                        error |= Self::validate_signature_name(&signature_name, &signature_names_added);
 
                         signature_names_added.insert(signature_name.to_ascii_uppercase(), false);
                     } else {
                         if signature_name.is_empty() {
                             error = true;
-                            eprintln!("Signature found without a name: {}\r", signature_text);
+
+                            if signature_text.eq_ignore_ascii_case("END") ||
+                                signature_text.eq_ignore_ascii_case("AND") {
+                                eprintln!("Signature name cannot be a reserved word at line: {}\r", line_number);
+                            } else {
+                                eprintln!("Signature found without a name: {}\r", signature_text);
+                            }
                         }
 
                         signature_lines.push(signature_text.to_string());
@@ -411,6 +403,7 @@ impl Signature {
         let mut signature_names_added = HashMap::new();
 
         let mut line_number = 0;
+        let mut last_empty_line_number = -1;
         if let Ok(lines) = Self::read_lines(file_path) {
             let mut signature_name = "".to_string();
             let mut previous_tag = "".to_string();
@@ -447,6 +440,8 @@ impl Signature {
 
                     info_line_found = true;
                 } else if Self::is_signature_name(signature_text) {
+                    error |= Self::validate_signature_exists_in_config(signatures, signature_text);
+
                     if signature_name_found && !info_line_found {
                         error = true;
                         eprintln!("Signature name found without any info: {}\r", signature_name);
@@ -458,14 +453,11 @@ impl Signature {
                         continue;
                     }
 
-                    if signature_names_added.contains_key(signature_text) {
-                        error = true;
-                        eprintln!("Signature name defined more than once: {}\r", signature_text);
-                    }
+                    error |= Self::validate_signature_name(signature_text, &signature_names_added);
 
                     previous_tag = "".to_string();
                     signature_name = signature_text.to_owned();
-                    signature_names_added.insert(signature_text.to_owned(), true);
+                    signature_names_added.insert(signature_text.to_ascii_uppercase(), true);
 
                     signature_name_found = true;
                     info_line_found = false;
@@ -475,19 +467,44 @@ impl Signature {
                         eprintln!("Signature name found without any info: {}\r", signature_name);
                     }
 
+                    if line.is_empty() && last_empty_line_number == line_number - 1 {
+                        error = true;
+                        eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                    }
+                    last_empty_line_number = line_number;
+
                     signature_name_found = false;
                     info_line_found = false;
                 }
             }
         }
 
-        for signature_name in signature_names_added {
-            if !signatures.iter().any(|signature| signature.signature_name.eq(&signature_name.0)) {
-                error = true;
-                eprintln!("Signature ID not found in config file: {}\r", signature_name.0);
-            }
-        }
         Ok(error)
+    }
+
+    fn validate_signature_exists_in_config(signatures: &[SignatureConfig], signature_name: &str) -> bool {
+        let mut error = false;
+
+        if !signatures.iter().any(|signature| signature.signature_name.eq(signature_name)) {
+            error = true;
+            eprintln!("Signature ID not found in config file: {}\r", signature_name);
+        }
+        error
+    }
+
+    fn validate_signature_name(signature_name: &str, signature_names_added: &HashMap<String, bool>) -> bool {
+        let mut error = false;
+
+        if signature_name.contains(' ') {
+            error = true;
+            eprintln!("Signature name contains spaces or invalid signature value: {}\r", signature_name);
+        }
+
+        if signature_names_added.contains_key(&signature_name.to_ascii_uppercase()) {
+            error = true;
+            eprintln!("Signature defined more than once or with different casing: {}\r", signature_name);
+        }
+        error
     }
 
     fn validate_signature_value_lines(signature_name: &str, signature_lines: &Vec<String>) -> bool {
@@ -527,7 +544,7 @@ impl Signature {
 
         let signature_text_upper = signature_text.to_ascii_uppercase();
 
-        if !signature_text.eq(&signature_text_upper) {
+        if signature_text.ne(&signature_text_upper) {
             error = true;
             eprintln!("Signature contains lowercase characters: {}\r", signature_name);
         }

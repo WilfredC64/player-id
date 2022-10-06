@@ -17,7 +17,8 @@ pub struct Config {
     pub player_name: Option<String>,
     pub config_file: Option<String>,
     pub base_path: String,
-    pub filename: String
+    pub filename: String,
+    pub convert_file_format: Option<String>
 }
 
 impl Config {
@@ -35,6 +36,7 @@ impl Config {
         let mut verify_signatures = false;
         let mut config_file = None;
         let mut player_name = None;
+        let mut convert_file_format = None;
 
         for argument in env::args().filter(|arg| arg.len() > 1 && arg.starts_with('-')) {
             match &argument[1..2] {
@@ -49,6 +51,7 @@ impl Config {
                 "s" => recursive = true,
                 "u" => list_unidentified = true,
                 "v" => verify_signatures = true,
+                "w" => convert_file_format = Some(argument[2..].to_string()),
                 "x" => display_hex_offset = true,
                 _ => return Err(format!("Unknown option: {}", argument))
             }
@@ -70,6 +73,8 @@ impl Config {
             Self::validate_player_name(player_name.as_ref())?;
         }
 
+        Self::validate_file_format_option(&convert_file_format)?;
+
         Ok(Config {
             cpu_threads,
             config_file,
@@ -84,7 +89,8 @@ impl Config {
             verify_signatures,
             player_name,
             base_path,
-            filename
+            filename,
+            convert_file_format
         })
     }
 
@@ -98,6 +104,16 @@ impl Config {
     fn validate_player_name(player_name: Option<&String>) -> Result<(), String> {
         if player_name.is_some() && player_name.unwrap().is_empty() {
             return Err("Player name cannot be empty.".to_string());
+        }
+        Ok(())
+    }
+
+    fn validate_file_format_option(file_format: &Option<String>) -> Result<(), String> {
+        if let Some(file_format) = file_format {
+            match file_format.as_str() {
+                "o" | "n" => {},
+                _ => return Err("Output format should be specified with -wo for old format or -wn for new format".to_string())
+            }
         }
         Ok(())
     }

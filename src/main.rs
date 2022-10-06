@@ -4,6 +4,7 @@
 mod config;
 mod player_id;
 #[path = "./utils/hvsc.rs"] mod hvsc;
+#[path = "./utils/sid_file.rs"] mod sid_file;
 
 use self::config::Config;
 use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
@@ -45,8 +46,15 @@ fn run() -> Result<(), String> {
         PlayerId::verify_signatures(config.config_file.as_ref())?;
         PlayerId::verify_signature_info(config.config_file.as_ref())?;
         return Ok(());
-    } else if config.show_player_info {
+    }
+
+    if config.show_player_info {
         display_player_info(&config)?;
+        return Ok(());
+    }
+
+    if let Some(convert_file_format) = config.convert_file_format {
+        PlayerId::convert_file_format(config.config_file.as_ref(), convert_file_format.eq("n"))?;
         return Ok(());
     }
 
@@ -168,7 +176,7 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
 
     let mut previous_player_name = "";
     for signature_id in signature_ids {
-        if !signature_id.signature_name.eq(previous_player_name) {
+        if signature_id.signature_name.ne(previous_player_name) {
             previous_player_name = &signature_id.signature_name;
             if let Some(occurrence) = player_occurrence.get(&signature_id.signature_name) {
                 println!("{:<24} {:>6}\r", signature_id.signature_name, occurrence);
@@ -253,5 +261,7 @@ fn print_usage() {
     println!("  -t: truncate filenames\r");
     println!("  -u: list also unidentified files\r");
     println!("  -v: verify signatures\r");
+    println!("  -wn: write signatures in new format");
+    println!("  -wo: write signatures in old format");
     println!("  -x: display hexadecimal offset of signature found\r");
 }
