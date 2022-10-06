@@ -166,7 +166,7 @@ impl PlayerId {
 
             output_strings.push(output_string);
         }
-        output_strings.join("\r\n")
+        output_strings.join("\r\n") + "\r\n"
     }
 
     pub fn verify_signatures(config_file: Option<&String>) -> Result<bool, String> {
