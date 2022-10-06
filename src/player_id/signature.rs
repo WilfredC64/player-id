@@ -2,20 +2,13 @@
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{self, BufRead, BufReader, Lines, Read};
-use std::path::PathBuf;
 
-use encoding_rs::WINDOWS_1252;
-use encoding_rs_io::{DecodeReaderBytesBuilder, DecodeReaderBytes};
 use str_utils::*;
 use substring::Substring;
 
 use super::bndm::{BndmConfig, find_pattern};
 
 const CMD_WILDCARD: u16 = 0x100;
-
-type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
 pub struct SignatureConfig {
     pub bndm_configs: Vec<BndmConfig>,
@@ -44,7 +37,7 @@ impl Signature {
             let mut last_index = start_offset;
             let mut index_found = true;
 
-            for config in  &signature.bndm_configs {
+            for config in &signature.bndm_configs {
                 let index = find_pattern(&source[last_index..], config);
 
                 if let Some(index) = index {
@@ -72,128 +65,107 @@ impl Signature {
         signature_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(signature_name)).cloned()
     }
 
-    pub fn read_config_file(file_path: &PathBuf, signature_name_to_filter: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
-        if !Self::is_config_file(file_path) {
-            return Err("Not a config file.".to_string());
+    pub fn read_config_lines(config_lines: &Vec<String>, signature_name_to_filter: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
+        if !Self::is_config_file(config_lines) {
+            return Err("Not an config file.".to_string());
         }
 
         let mut signatures = vec![];
+        let mut signature_name = "".to_string();
+        let mut signature_lines = vec![];
 
-        if let Ok(lines) = Self::read_lines(file_path) {
-            let mut signature_name = "".to_string();
+        for line in config_lines {
+            let signature_text = line.trim();
 
-            let mut signature_lines = vec![];
-            for line in lines.flatten() {
-                let signature_text = line.trim();
-
-                if Self::is_signature_min_length(signature_text) {
-                    if Self::is_signature_name(signature_text) {
-                        Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
-                        signature_name = signature_text.to_string();
-                    } else {
-                        signature_lines.push(signature_text.to_string());
-                        if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
-                            Self::process_single_signature(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
-                        }
-                    }
-                } else {
+            if Self::is_signature_min_length(signature_text) {
+                if Self::is_signature_name(signature_text) {
                     Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
-                    signature_name = "".to_string();
+                    signature_name = signature_text.to_string();
+                } else {
+                    signature_lines.push(signature_text.to_string());
+                    if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
+                        Self::process_single_signature(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+                    }
                 }
+            } else {
+                Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
+                signature_name = "".to_string();
             }
-            Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         }
+
+        Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         Ok(signatures)
     }
 
-    pub fn read_info_file(file_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
-        if !Self::is_info_file(file_path) {
+    pub fn read_info_lines(lines: &Vec<String>) -> Result<Vec<SignatureInfo>, String> {
+        if !Self::is_info_file(lines) {
             return Err("Not an info file.".to_string());
         }
 
         let mut signature_infos = vec![];
-        if let Ok(lines) = Self::read_lines(file_path) {
-            let mut signature_name = "".to_string();
+        let mut signature_name = "".to_string();
 
-            let mut info_lines = vec![];
-            for line in lines.flatten() {
-                if Self::is_signature_min_length(&line) {
-                    if Self::is_info_tag(&line) {
-                        info_lines.push(line);
-                    } else if Self::is_signature_name(&line) {
-                        if !signature_name.is_empty() {
-                            signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
-                        }
-                        info_lines.clear();
-                        signature_name = line;
-                    } else {
+        let mut info_lines = vec![];
+        for line in lines {
+            if Self::is_signature_min_length(line) {
+                if Self::is_info_tag(line) {
+                    info_lines.push(line.to_owned());
+                } else if Self::is_signature_name(line) {
+                    if !signature_name.is_empty() {
                         signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
-                        info_lines.clear();
-                        signature_name = "".to_string();
                     }
+                    info_lines.clear();
+                    signature_name = line.to_owned();
                 } else {
                     signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
                     info_lines.clear();
                     signature_name = "".to_string();
                 }
-            }
-
-            if !info_lines.is_empty() {
+            } else {
                 signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
+                info_lines.clear();
+                signature_name = "".to_string();
             }
+        }
+
+        if !info_lines.is_empty() {
+            signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
         }
         Ok(signature_infos)
     }
 
-    pub fn is_config_file(filename: &PathBuf) -> bool {
-        if let Ok(file) = File::open(filename) {
-            let lines = Self::get_first_few_lines_from_file(file);
-            let mut lines_iter = lines.iter();
+    pub fn is_config_file(config_lines: &[String]) -> bool {
+        let mut lines_iter = config_lines.iter();
 
-            while let Some(line) = lines_iter.next() {
-                if line.trim().is_empty() {
-                    continue;
-                }
-                if Self::is_signature_min_length(line) && Self::is_signature_name(line) {
-                    if let Some(line) = lines_iter.next() {
-                        return Self::is_signature_min_length(line) && !Self::is_signature_name(line);
-                    }
-                }
-                break;
+        while let Some(line) = lines_iter.next() {
+            if line.trim().is_empty() {
+                continue;
             }
+            if Self::is_signature_min_length(line) && Self::is_signature_name(line) {
+                if let Some(line) = lines_iter.next() {
+                    return Self::is_signature_min_length(line) && !Self::is_signature_name(line);
+                }
+            }
+            break;
         }
         false
     }
 
-    fn is_info_file(filename: &PathBuf) -> bool {
-        if let Ok(file) = File::open(filename) {
-            let lines = Self::get_first_few_lines_from_file(file);
-            let mut lines_iter = lines.iter();
+    pub fn is_info_file(info_lines: &[String]) -> bool {
+        let mut lines_iter = info_lines.iter();
 
-            while let Some(line) = lines_iter.next() {
-                if line.trim().is_empty() {
-                    continue;
-                }
-                if Self::is_signature_min_length(line) && Self::is_signature_name(line) && !Self::is_info_tag(line) {
-                    if let Some(line) = lines_iter.next() {
-                        return Self::is_signature_min_length(line) && Self::is_info_tag(line);
-                    }
-                }
-                break;
+        while let Some(line) = lines_iter.next() {
+            if line.trim().is_empty() {
+                continue;
             }
+            if Self::is_signature_min_length(line) && Self::is_signature_name(line) && !Self::is_info_tag(line) {
+                if let Some(line) = lines_iter.next() {
+                    return Self::is_signature_min_length(line) && Self::is_info_tag(line);
+                }
+            }
+            break;
         }
         false
-    }
-
-    fn get_first_few_lines_from_file(file: File) -> Vec<String> {
-        let reader = BufReader::new(
-            DecodeReaderBytesBuilder::new()
-                .encoding(Some(WINDOWS_1252))
-                .build(file));
-        let chunk = reader.take(1000);
-        chunk.lines()
-            .map(|line| line.unwrap_or_default())
-            .collect::<Vec<_>>()
     }
 
     fn process_multi_signatures(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
@@ -303,179 +275,163 @@ impl Signature {
         u16::from_str_radix(digit_string, 16).unwrap_or(0)
     }
 
-    fn read_lines(filename: &PathBuf) -> io::Result<LinesDecoded> {
-        let file = File::open(filename)?;
-        let reader = BufReader::new(
-            DecodeReaderBytesBuilder::new()
-                .encoding(Some(WINDOWS_1252))
-                .build(file));
-        Ok(reader.lines())
-    }
-
-    pub fn verify_config_file(file_path: &PathBuf) -> Result<bool, String> {
-        if !Self::is_config_file(file_path) {
-            return Err("Not a config file.".to_string());
-        }
-
+    pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
         let mut error = false;
         let mut signature_names_added = HashMap::new();
 
         let mut line_number = 1;
         let mut last_empty_line_number = -1;
-        if let Ok(lines) = Self::read_lines(file_path) {
-            let mut signature_name = "".to_string();
-            let mut signature_lines = vec![];
+        let mut signature_name = "".to_string();
+        let mut signature_lines = vec![];
 
-            for line in lines.flatten() {
-                let signature_text = line.trim();
+        for line in config_lines {
+            let signature_text = line.trim();
 
-                if Self::is_signature_min_length(signature_text) {
-                    if Self::is_signature_name(signature_text) {
-                        error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
-                        error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
-                        signature_lines.clear();
-
-                        signature_name = signature_text.to_string();
-
-                        error |= Self::validate_signature_name(&signature_name, &signature_names_added);
-
-                        signature_names_added.insert(signature_name.to_ascii_uppercase(), false);
-                    } else {
-                        if signature_name.is_empty() {
-                            error = true;
-
-                            if signature_text.eq_ignore_ascii_case("END") ||
-                                signature_text.eq_ignore_ascii_case("AND") {
-                                eprintln!("Signature name cannot be a reserved word at line: {}\r", line_number);
-                            } else {
-                                eprintln!("Signature found without a name: {}\r", signature_text);
-                            }
-                        }
-
-                        signature_lines.push(signature_text.to_string());
-                        if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
-                            error |= Self::validate_signature_value(&signature_name, &signature_lines.join(" "));
-                            signature_lines.clear();
-                        }
-                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
-                    }
-                    error |= Self::validate_spaces(&signature_name, signature_text, line.len(), signature_text.len())
-                } else {
-                    if signature_text.is_empty() && !line.is_empty() {
-                        error = true;
-                        eprintln!("Line found with only spaces\r");
-                    }
-
+            if Self::is_signature_min_length(signature_text) {
+                if Self::is_signature_name(signature_text) {
                     error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
                     error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
                     signature_lines.clear();
 
-                    if !signature_text.is_empty() {
+                    signature_name = signature_text.to_string();
+
+                    error |= Self::validate_signature_name(&signature_name, &signature_names_added);
+
+                    signature_names_added.insert(signature_name.to_ascii_uppercase(), false);
+                } else {
+                    if signature_name.is_empty() {
                         error = true;
-                        eprintln!("Invalid signature found. Signature name should be at least 3 characters long and signature value line should have at least 2 valid characters: {}\r", signature_text);
-                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
+
+                        if signature_text.eq_ignore_ascii_case("END") ||
+                            signature_text.eq_ignore_ascii_case("AND") {
+                            eprintln!("Signature name cannot be a reserved word at line: {}\r", line_number);
+                        } else {
+                            eprintln!("Signature found without a name: {}\r", signature_text);
+                        }
                     }
 
-                    if line.is_empty() && last_empty_line_number == line_number - 1 {
-                        error = true;
-                        eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                    signature_lines.push(signature_text.to_string());
+                    if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
+                        error |= Self::validate_signature_value(&signature_name, &signature_lines.join(" "));
+                        signature_lines.clear();
                     }
-
-                    if error {
-                        signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
-                    } else {
-                        signature_name = "".to_string();
-                    }
-
-                    last_empty_line_number = line_number;
+                    signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                }
+                error |= Self::validate_spaces(&signature_name, signature_text, line.len(), signature_text.len())
+            } else {
+                if signature_text.is_empty() && !line.is_empty() {
+                    error = true;
+                    eprintln!("Line found with only spaces\r");
                 }
 
-                line_number += 1;
+                error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
+                error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
+                signature_lines.clear();
+
+                if !signature_text.is_empty() {
+                    error = true;
+                    eprintln!("Invalid signature found. Signature name should be at least 3 characters long and signature value line should have at least 2 valid characters: {}\r", signature_text);
+                    signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                }
+
+                if line.is_empty() && last_empty_line_number == line_number - 1 {
+                    error = true;
+                    eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                }
+
+                if error {
+                    signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
+                } else {
+                    signature_name = "".to_string();
+                }
+
+                last_empty_line_number = line_number;
             }
-            error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
-            error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
+
+            line_number += 1;
         }
+
+        error |= Self::validate_signature_without_value(&signature_names_added, &signature_name);
+        error |= Self::validate_signature_value_lines(&signature_name, &signature_lines);
         Ok(error)
     }
 
-    pub fn verify_info_file(file_path: &PathBuf, signatures: &[SignatureConfig]) -> Result<bool, String> {
+    pub fn verify_info_file(info_lines: &Vec<String>, signatures: &[SignatureConfig]) -> Result<bool, String> {
         let mut error = false;
         let mut signature_names_added = HashMap::new();
 
         let mut line_number = 0;
         let mut last_empty_line_number = -1;
-        if let Ok(lines) = Self::read_lines(file_path) {
-            let mut signature_name = "".to_string();
-            let mut previous_tag = "".to_string();
-            let mut info_line_found = false;
-            let mut signature_name_found = false;
+        let mut signature_name = "".to_string();
+        let mut previous_tag = "".to_string();
+        let mut info_line_found = false;
+        let mut signature_name_found = false;
 
-            for line in lines.flatten() {
-                line_number += 1;
-                let signature_text = line.trim_end();
-                if signature_text.len() != line.len() {
+        for line in info_lines {
+            line_number += 1;
+            let signature_text = line.trim_end();
+            if signature_text.len() != line.len() {
+                error = true;
+                eprintln!("Space(s) found at the end of the line on line: {}\r", line_number);
+            }
+
+            let signature_text = signature_text.trim();
+
+            if Self::is_info_tag(line) {
+                if !signature_name_found {
                     error = true;
-                    eprintln!("Space(s) found at the end of the line on line: {}\r", line_number);
-                }
-
-                let signature_text = signature_text.trim();
-
-                if Self::is_info_tag(&line) {
-                    if !signature_name_found {
-                        error = true;
-                        eprintln!("Info found without a signature name at line: {}\r", line_number);
-                        previous_tag = "".to_string();
-                    }
-
-                    let tag = line.chars().take(10).collect::<String>();
-                    let tag = tag.trim();
-                    error |= Self::validate_info_tag(&signature_name, tag, &previous_tag);
-
-                    let value = &line.chars().skip(11).collect::<String>();
-                    error |= Self::validate_info_tag_value(&signature_name, tag, value);
-
-                    if !tag.is_empty() {
-                        previous_tag = tag.to_owned();
-                    }
-
-                    info_line_found = true;
-                } else if Self::is_signature_name(signature_text) {
-                    error |= Self::validate_signature_exists_in_config(signatures, signature_text);
-
-                    if signature_name_found && !info_line_found {
-                        error = true;
-                        eprintln!("Signature name found without any info: {}\r", signature_name);
-                    }
-
-                    if let Some(position) = signature_text.find(':') {
-                        error = true;
-                        eprintln!("Wrong indentation '{}' or invalid tag in: {}\r", &signature_text[..=position], signature_name);
-                        continue;
-                    }
-
-                    error |= Self::validate_signature_name(signature_text, &signature_names_added);
-
+                    eprintln!("Info found without a signature name at line: {}\r", line_number);
                     previous_tag = "".to_string();
-                    signature_name = signature_text.to_owned();
-                    signature_names_added.insert(signature_text.to_ascii_uppercase(), true);
-
-                    signature_name_found = true;
-                    info_line_found = false;
-                } else {
-                    if signature_name_found && !info_line_found {
-                        error = true;
-                        eprintln!("Signature name found without any info: {}\r", signature_name);
-                    }
-
-                    if line.is_empty() && last_empty_line_number == line_number - 1 {
-                        error = true;
-                        eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
-                    }
-                    last_empty_line_number = line_number;
-
-                    signature_name_found = false;
-                    info_line_found = false;
                 }
+
+                let tag = line.chars().take(10).collect::<String>();
+                let tag = tag.trim();
+                error |= Self::validate_info_tag(&signature_name, tag, &previous_tag);
+
+                let value = &line.chars().skip(11).collect::<String>();
+                error |= Self::validate_info_tag_value(&signature_name, tag, value);
+
+                if !tag.is_empty() {
+                    previous_tag = tag.to_owned();
+                }
+
+                info_line_found = true;
+            } else if Self::is_signature_name(signature_text) {
+                error |= Self::validate_signature_exists_in_config(signatures, signature_text);
+
+                if signature_name_found && !info_line_found {
+                    error = true;
+                    eprintln!("Signature name found without any info: {}\r", signature_name);
+                }
+
+                if let Some(position) = signature_text.find(':') {
+                    error = true;
+                    eprintln!("Wrong indentation '{}' or invalid tag in: {}\r", &signature_text[..=position], signature_name);
+                    continue;
+                }
+
+                error |= Self::validate_signature_name(signature_text, &signature_names_added);
+
+                previous_tag = "".to_string();
+                signature_name = signature_text.to_owned();
+                signature_names_added.insert(signature_text.to_ascii_uppercase(), true);
+
+                signature_name_found = true;
+                info_line_found = false;
+            } else {
+                if signature_name_found && !info_line_found {
+                    error = true;
+                    eprintln!("Signature name found without any info: {}\r", signature_name);
+                }
+
+                if line.is_empty() && last_empty_line_number == line_number - 1 {
+                    error = true;
+                    eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                }
+                last_empty_line_number = line_number;
+
+                signature_name_found = false;
+                info_line_found = false;
             }
         }
 

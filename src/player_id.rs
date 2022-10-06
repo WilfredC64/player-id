@@ -6,16 +6,21 @@
 mod bndm;
 mod signature;
 
-use std::{env, fs};
-use std::fs::File;
-use std::io::Read;
+use std::env;
+use std::fs::{self, File};
+use std::io::{self, BufRead, BufReader, Lines, Read};
 use std::path::{Path, PathBuf};
+
+use encoding_rs::WINDOWS_1252;
+use encoding_rs_io::{DecodeReaderBytes, DecodeReaderBytesBuilder};
 
 use super::sid_file;
 use signature::{Signature};
 pub use signature::{SignatureConfig, SignatureInfo, SignatureMatch};
 
 const DEFAULT_CONFIG_FILE_NAME: &str = "sidid.cfg";
+
+type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
 pub struct PlayerId {}
 
@@ -44,14 +49,17 @@ impl PlayerId {
 
     pub fn is_config_file(filename: &str) -> bool {
         if let Ok(path) = PlayerId::get_config_path_with_fallback(filename) {
-            Signature::is_config_file(&path)
-        } else {
-            false
+            if let Ok(file) = File::open(path) {
+                let lines = Self::get_first_few_lines_from_file(file);
+                return Signature::is_config_file(&lines);
+            }
         }
+        false
     }
 
     pub fn load_config_file(config_path: &PathBuf, player_name: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
-        let sid_ids = Signature::read_config_file(config_path, player_name)?;
+        let lines = Self::read_text_file(config_path)?;
+        let sid_ids = Signature::read_config_lines(&lines, player_name)?;
         if sid_ids.is_empty() {
             return if player_name.is_none() {
                 Err("No signature defined.".to_string())
@@ -63,7 +71,8 @@ impl PlayerId {
     }
 
     pub fn load_info_file(config_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
-        let sid_infos = Signature::read_info_file(config_path)?;
+        let lines = Self::read_text_file(config_path)?;
+        let sid_infos = Signature::read_info_lines(&lines)?;
         if sid_infos.is_empty() {
             return Err("No info sections defined.".to_string());
         }
@@ -103,7 +112,9 @@ impl PlayerId {
         let config_path = PlayerId::get_config_path(config_file)?;
         eprintln!("Writing config file to: {}\r", config_path.display());
 
-        let sid_ids = Signature::read_config_file(&config_path, None)?;
+        let lines = Self::read_text_file(&config_path)?;
+        let sid_ids = Signature::read_config_lines(&lines, None)?;
+
         let output_string = Self::convert_ids_to_string(sid_ids, new_format);
 
         let write_result = fs::write(config_path, output_string);
@@ -164,7 +175,8 @@ impl PlayerId {
         let config_path = PlayerId::get_config_path(config_file)?;
         eprintln!("Verify config file: {}\r\n\r", config_path.display());
 
-        let issues_found = Signature::verify_config_file(&config_path)?;
+        let lines = Self::read_text_file(&config_path)?;
+        let issues_found = Signature::verify_config_file(&lines)?;
 
         if !issues_found {
             eprintln!("No issues found in configuration.\r");
@@ -176,7 +188,8 @@ impl PlayerId {
         eprintln!("\r\nChecking info file...\r");
 
         let config_path = PlayerId::get_config_path(config_file)?;
-        let sid_ids = Signature::read_config_file(&config_path, None)?;
+        let lines = Self::read_text_file(&config_path)?;
+        let sid_ids = Signature::read_config_lines(&lines, None)?;
 
         let config_path_string = config_path.display().to_string().replace(".cfg", ".nfo");
         let config_path = PlayerId::get_config_path_with_fallback(&config_path_string);
@@ -184,7 +197,8 @@ impl PlayerId {
         if let Ok(config_path) = config_path {
             eprintln!("Verify info file: {}\r\n\r", config_path.display());
 
-            let issues_found = Signature::verify_info_file(&config_path, &sid_ids)?;
+            let lines = Self::read_text_file(&config_path)?;
+            let issues_found = Signature::verify_info_file(&lines, &sid_ids)?;
 
             if !issues_found {
                 eprintln!("No issues found in info file.\r");
@@ -209,7 +223,34 @@ impl PlayerId {
         Err(format!("File doesn't exist: {}", filename))
     }
 
-    fn read_file(filename: &str) -> std::io::Result<Vec<u8>> {
+    fn read_text_file(config_path: &PathBuf) -> Result<Vec<String>, String> {
+        let lines = Self::read_lines(config_path);
+        if let Ok(lines) = lines {
+            return Ok(lines);
+        }
+
+        Err(format!("Error reading file: {}", config_path.display()))
+    }
+
+    fn read_lines(filename: &PathBuf) -> io::Result<Vec<String>> {
+        let file = File::open(filename)?;
+        let lines = BufReader::new(
+            DecodeReaderBytesBuilder::new()
+                .encoding(Some(WINDOWS_1252))
+                .build(file)).lines();
+        Ok(lines.flatten().collect::<Vec<String>>())
+    }
+
+    fn get_first_few_lines_from_file(file: File) -> Vec<String> {
+        let reader = BufReader::new(
+            DecodeReaderBytesBuilder::new()
+                .encoding(Some(WINDOWS_1252))
+                .build(file));
+        let chunk = reader.take(1000);
+        chunk.lines().flatten().collect::<Vec<_>>()
+    }
+
+    fn read_file(filename: &str) -> io::Result<Vec<u8>> {
         let mut data = vec![];
         File::open(filename)?.read_to_end(&mut data)?;
         Ok(data)
