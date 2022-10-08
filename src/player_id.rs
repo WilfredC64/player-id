@@ -39,12 +39,6 @@ impl PlayerId {
         }
     }
 
-    fn get_data_offset(filename: &str, data: &[u8]) -> usize {
-        if sid_file::is_sid_file(data) {
-            sid_file::get_data_offset(data)
-        } else if filename.ends_with(".prg") { 2 } else { 0 }
-    }
-
     pub fn find_player_info(signature_infos: &[SignatureInfo], player_name: &str) -> Option<SignatureInfo> {
         Signature::find_signature_info(signature_infos, player_name)
     }
@@ -210,6 +204,12 @@ impl PlayerId {
             eprintln!("\r\nNo info file found: {}\r", config_path_string);
             Ok(true)
         }
+    }
+
+    fn get_data_offset(filename: &str, data: &[u8]) -> usize {
+        if sid_file::is_sid_file(data) {
+            sid_file::get_data_offset(data)
+        } else if filename.ends_with(".prg") { 2 } else { 0 }
     }
 
     fn get_config_path_with_fallback(filename: &str) -> Result<PathBuf, String> {
