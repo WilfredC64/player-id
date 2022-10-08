@@ -26,21 +26,23 @@ pub struct PlayerId {}
 
 impl PlayerId {
     pub fn find_players_in_buffer(buffer: &[u8], signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
-        Signature::find_signatures(buffer, 0, signature_ids, scan_for_multiple)
+        Signature::find_signatures(buffer, signature_ids, scan_for_multiple)
     }
 
-    pub fn find_players_in_file(filename: &str, sid_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
-        if let Ok(sid_data) = Self::read_file(filename) {
-            let start_offset = if sid_file::is_sid_file(&sid_data) {
-                sid_file::get_data_offset(&sid_data)
-            } else {
-                0
-            };
+    pub fn find_players_in_file(filename: &str, signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
+        if let Ok(data) = Self::read_file(filename) {
+            let data_offset = Self::get_data_offset(filename, &data);
 
-            Signature::find_signatures(&sid_data, start_offset, sid_ids, scan_for_multiple)
+            Signature::find_signatures(&data[data_offset..], signature_ids, scan_for_multiple)
         } else {
             vec![]
         }
+    }
+
+    fn get_data_offset(filename: &str, data: &[u8]) -> usize {
+        if sid_file::is_sid_file(data) {
+            sid_file::get_data_offset(data)
+        } else if filename.ends_with(".prg") { 2 } else { 0 }
     }
 
     pub fn find_player_info(signature_infos: &[SignatureInfo], player_name: &str) -> Option<SignatureInfo> {
@@ -59,24 +61,24 @@ impl PlayerId {
 
     pub fn load_config_file(config_path: &PathBuf, player_name: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
         let lines = Self::read_text_file(config_path)?;
-        let sid_ids = Signature::read_config_lines(&lines, player_name)?;
-        if sid_ids.is_empty() {
+        let signature_ids = Signature::read_config_lines(&lines, player_name)?;
+        if signature_ids.is_empty() {
             return if player_name.is_none() {
                 Err("No signature defined.".to_string())
             } else {
                 Err(format!("No signature found with name: {}", player_name.unwrap()))
             }
         }
-        Ok(sid_ids)
+        Ok(signature_ids)
     }
 
     pub fn load_info_file(config_path: &PathBuf) -> Result<Vec<SignatureInfo>, String> {
         let lines = Self::read_text_file(config_path)?;
-        let sid_infos = Signature::read_info_lines(&lines)?;
-        if sid_infos.is_empty() {
+        let signature_infos = Signature::read_info_lines(&lines)?;
+        if signature_infos.is_empty() {
             return Err("No info sections defined.".to_string());
         }
-        Ok(sid_infos)
+        Ok(signature_infos)
     }
 
     pub fn get_info_file_path(config_file: Option<&String>) -> Result<PathBuf, String> {
@@ -113,9 +115,9 @@ impl PlayerId {
         eprintln!("Writing config file to: {}\r", config_path.display());
 
         let lines = Self::read_text_file(&config_path)?;
-        let sid_ids = Signature::read_config_lines(&lines, None)?;
+        let signature_ids = Signature::read_config_lines(&lines, None)?;
 
-        let output_string = Self::convert_ids_to_string(sid_ids, new_format);
+        let output_string = Self::convert_ids_to_string(signature_ids, new_format);
 
         let write_result = fs::write(config_path, output_string);
         if let Err(write_error) = write_result {
@@ -126,23 +128,23 @@ impl PlayerId {
         Ok(())
     }
 
-    fn convert_ids_to_string(sid_ids: Vec<SignatureConfig>, new_format: bool) -> String {
+    fn convert_ids_to_string(signature_ids: Vec<SignatureConfig>, new_format: bool) -> String {
         let mut output_strings = vec![];
         let mut previous_signature_name = "".to_string();
 
-        for sid_id in sid_ids {
-            if sid_id.signature_name.ne(&previous_signature_name) {
-                if !output_strings.is_empty() && !sid_id.signature_name.starts_with('(') {
-                    output_strings.push("\r\n".to_string() + &sid_id.signature_name);
+        for signature in signature_ids {
+            if signature.signature_name.ne(&previous_signature_name) {
+                if !output_strings.is_empty() && !signature.signature_name.starts_with('(') {
+                    output_strings.push("\r\n".to_string() + &signature.signature_name);
                 } else {
-                    output_strings.push(sid_id.signature_name.to_owned());
+                    output_strings.push(signature.signature_name.to_owned());
                 }
             }
 
-            previous_signature_name = sid_id.signature_name;
+            previous_signature_name = signature.signature_name;
             let mut output_string = "".to_string();
 
-            for bndm_config in sid_id.bndm_configs {
+            for bndm_config in signature.bndm_configs {
                 if !output_string.is_empty() {
                     output_string += if new_format { " && " } else { " AND " };
                 }
@@ -189,7 +191,7 @@ impl PlayerId {
 
         let config_path = PlayerId::get_config_path(config_file)?;
         let lines = Self::read_text_file(&config_path)?;
-        let sid_ids = Signature::read_config_lines(&lines, None)?;
+        let signature_ids = Signature::read_config_lines(&lines, None)?;
 
         let config_path_string = config_path.display().to_string().replace(".cfg", ".nfo");
         let config_path = PlayerId::get_config_path_with_fallback(&config_path_string);
@@ -198,7 +200,7 @@ impl PlayerId {
             eprintln!("Verify info file: {}\r\n\r", config_path.display());
 
             let lines = Self::read_text_file(&config_path)?;
-            let issues_found = Signature::verify_info_file(&lines, &sid_ids)?;
+            let issues_found = Signature::verify_info_file(&lines, &signature_ids)?;
 
             if !issues_found {
                 eprintln!("No issues found in info file.\r");
