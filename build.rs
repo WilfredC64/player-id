@@ -18,6 +18,7 @@ fn copy_config_to_build_folder() {
 
     if build_folder_root.exists() {
         let _ = fs::copy("./config/sidid.cfg", build_folder_root.join("sidid.cfg").to_str().unwrap());
+        let _ = fs::copy("./config/tedid.cfg", build_folder_root.join("tedid.cfg").to_str().unwrap());
         let _ = fs::copy("./config/sidid.nfo", build_folder_root.join("sidid.nfo").to_str().unwrap());
     }
 }
