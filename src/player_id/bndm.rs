@@ -84,7 +84,7 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
             j -= 1;
             if d & df != 0 {
                 if j == 0 {
-                    if find_remaining(&source[i + WORD_SIZE_IN_BITS..], &pattern[WORD_SIZE_IN_BITS..], wildcard) {
+                    if find_remaining(source, i + WORD_SIZE_IN_BITS, pattern, wildcard) {
                         return Some(i);
                     }
                     j += 1;
@@ -99,11 +99,11 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     None
 }
 
-fn find_remaining(source: &[u8], search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
+fn find_remaining(source: &[u8], start_index: usize, search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
     if let Some(wildcard) = wildcard {
-        search_pattern.iter().enumerate().rev().all(|(index, pattern_byte)| source[index] == *pattern_byte || *pattern_byte == *wildcard)
+        search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| source[start_index + index] == *pattern_byte || *pattern_byte == *wildcard)
     } else {
-        search_pattern.iter().enumerate().rev().all(|(index, pattern_byte)| source[index] == *pattern_byte)
+        search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| source[start_index + index] == *pattern_byte)
     }
 }
 
