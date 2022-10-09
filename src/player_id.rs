@@ -24,14 +24,14 @@ pub struct PlayerId {}
 
 impl PlayerId {
     pub fn find_players_in_buffer(buffer: &[u8], signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
-        Signature::find_signatures(buffer, signature_ids, scan_for_multiple)
+        Signature::find_signatures(buffer, 0, signature_ids, scan_for_multiple)
     }
 
     pub fn find_players_in_file(filename: &str, signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         if let Ok(data) = Self::read_file(filename) {
             let data_offset = Self::get_data_offset(filename, &data);
 
-            Signature::find_signatures(&data[data_offset..], signature_ids, scan_for_multiple)
+            Signature::find_signatures(&data, data_offset, signature_ids, scan_for_multiple)
         } else {
             vec![]
         }

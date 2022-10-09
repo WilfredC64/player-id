@@ -29,13 +29,13 @@ pub struct SignatureInfo {
 pub struct Signature {}
 
 impl Signature {
-    pub fn find_signatures(source: &[u8], signatures: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
+    pub fn find_signatures(source: &[u8], start_offset: usize, signatures: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
         let mut matches = vec![];
 
         for signature in signatures {
             let mut indexes = vec![];
             let mut index_found = true;
-            let mut last_index = 0;
+            let mut last_index = start_offset;
 
             for config in &signature.bndm_configs {
                 let index = find_pattern(&source[last_index..], config);
