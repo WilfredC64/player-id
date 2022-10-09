@@ -8,19 +8,17 @@ mod signature;
 
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Lines, Read};
+use std::io::{self, BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use encoding_rs::WINDOWS_1252;
-use encoding_rs_io::{DecodeReaderBytes, DecodeReaderBytesBuilder};
+use encoding_rs_io::DecodeReaderBytesBuilder;
 
 use super::sid_file;
-use signature::{Signature};
+use signature::Signature;
 pub use signature::{SignatureConfig, SignatureInfo, SignatureMatch};
 
 const DEFAULT_CONFIG_FILE_NAME: &str = "sidid.cfg";
-
-type LinesDecoded = Lines<BufReader<DecodeReaderBytes<File, Vec<u8>>>>;
 
 pub struct PlayerId {}
 
