@@ -14,8 +14,9 @@ Signatures are stored in a config file, e.g., in a file named "sidid.cfg".
 This file should be ISO-8859-1 encoded.
 
 A signature starts with a name that can be a player/editor name or if that is
-not known, it is common to put the author's name of the player/tunes for the
-signature name. A signature name must not contain spaces.
+not known, it is common to put the author's name of the player/tunes for a
+signature name. A signature name must not contain spaces and should be at
+least 3 characters long.
 
 A signature consists of 2 hexadecimal digits and can contain wildcards by
 specifying a ?? token. A wildcard for a nibble is not possible. Each value
