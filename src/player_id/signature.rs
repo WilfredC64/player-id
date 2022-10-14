@@ -20,11 +20,7 @@ pub struct SignatureMatch {
     pub indexes: Vec<usize>,
 }
 
-#[derive(Clone)]
-pub struct SignatureInfo {
-    pub info_lines: Vec<String>,
-    pub signature_name: String
-}
+pub type SignatureInfo = (String, Vec<String>);
 
 pub struct Signature {}
 
@@ -62,7 +58,7 @@ impl Signature {
     }
 
     pub fn find_signature_info(signature_infos: &[SignatureInfo], signature_name: &str) -> Option<SignatureInfo> {
-        signature_infos.iter().find(|info| info.signature_name.eq_ignore_ascii_case(signature_name)).cloned()
+        signature_infos.iter().find(|(signature_info_name, _)| signature_info_name.eq_ignore_ascii_case(signature_name)).cloned()
     }
 
     pub fn read_config_lines(config_lines: &Vec<String>, signature_name_to_filter: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
@@ -112,24 +108,24 @@ impl Signature {
                     info_lines.push(line.to_owned());
                 } else if Self::is_signature_name(line) {
                     if !signature_name.is_empty() {
-                        signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
+                        signature_infos.push((signature_name, info_lines.to_owned()));
                     }
                     info_lines.clear();
                     signature_name = line.to_owned();
                 } else {
-                    signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
+                    signature_infos.push((signature_name, info_lines.to_owned()));
                     info_lines.clear();
                     signature_name = "".to_string();
                 }
             } else {
-                signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
+                signature_infos.push((signature_name, info_lines.to_owned()));
                 info_lines.clear();
                 signature_name = "".to_string();
             }
         }
 
         if !info_lines.is_empty() {
-            signature_infos.push(SignatureInfo { signature_name, info_lines: info_lines.to_owned() });
+            signature_infos.push((signature_name, info_lines.to_owned()));
         }
         Ok(signature_infos)
     }

@@ -239,8 +239,8 @@ fn display_player_info(config: &Config) -> Result<(), String> {
     let player_infos = PlayerId::load_info_file(&config_path)?;
     let player_name = config.player_name.as_ref().unwrap();
 
-    if let Some(player_info) = PlayerId::find_player_info(&player_infos, player_name) {
-        println!("Player info:\r\n\r\n{}\r\n{}\r", player_info.signature_name, player_info.info_lines.join("\r\n"));
+    if let Some((signature_name, info_lines)) = PlayerId::find_player_info(&player_infos, player_name) {
+        println!("Player info:\r\n\r\n{}\r\n{}\r", signature_name, info_lines.join("\r\n"));
     } else {
         eprintln!("No info found for player ID: {}\r", &player_name);
     }
