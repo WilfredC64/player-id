@@ -254,8 +254,8 @@ fn print_usage() {
     println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]\r");
     println!("  -f{{config_file}}: config file [Default SIDIDCFG env. var. / sidid.cfg file]\r");
     println!("  -h: scan HVSC location [Uses HVSC env. variable for HVSC path]\r");
-    println!("  -n: show player info [use together with -p option]\r");
     println!("  -m: scan for multiple signatures\r");
+    println!("  -n: show player info [use together with -p option]\r");
     println!("  -o: list only unidentified files\r");
     println!("  -p{{player_name}}: scan only for specific player name\r");
     println!("  -s: include subdirectories\r");
