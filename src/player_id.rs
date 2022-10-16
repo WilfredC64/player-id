@@ -37,7 +37,7 @@ impl PlayerId {
         }
     }
 
-    pub fn find_player_info(signature_infos: &[SignatureInfo], player_name: &str) -> Option<SignatureInfo> {
+    pub fn find_player_info<'a>(signature_infos: &'a [SignatureInfo], player_name: &str) -> Option<&'a SignatureInfo> {
         Signature::find_signature_info(signature_infos, player_name)
     }
 

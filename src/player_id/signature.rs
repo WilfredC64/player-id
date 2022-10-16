@@ -57,8 +57,8 @@ impl Signature {
         matches
     }
 
-    pub fn find_signature_info(signature_infos: &[SignatureInfo], signature_name: &str) -> Option<SignatureInfo> {
-        signature_infos.iter().find(|(signature_info_name, _)| signature_info_name.eq_ignore_ascii_case(signature_name)).cloned()
+    pub fn find_signature_info<'a>(signature_infos: &'a [SignatureInfo], signature_name: &str) -> Option<&'a SignatureInfo> {
+        signature_infos.iter().find(|(signature_info_name, _)| signature_info_name.eq_ignore_ascii_case(signature_name))
     }
 
     pub fn read_config_lines(config_lines: &Vec<String>, signature_name_to_filter: Option<&String>) -> Result<Vec<SignatureConfig>, String> {
