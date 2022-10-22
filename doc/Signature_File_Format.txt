@@ -11,7 +11,7 @@ SPECIFICATION
 =============
 
 Signatures are stored in a config file, e.g., in a file named "sidid.cfg".
-This file should be ISO-8859-1 encoded.
+This file should be Windows-1252 encoded.
 
 A signature starts with a name that can be a player/editor name or if that is
 not known, it is common to put the author's name of the player/tunes for a
@@ -139,8 +139,8 @@ INFO FILE FORMAT
 
 Each config file can have an info file, e.g. a file named "sidid.nfo". An info
 file contains information about a signature. The info filename is the same as
-the config filename but with extension nfo. The info file should be ISO-8859-1
-encoded.
+the config filename but with extension nfo. The info file should be
+Windows-1252 encoded.
 
 An info section starts with the signature name. This name should be present in
 the config file and must have the same casing. The lines under the signature
