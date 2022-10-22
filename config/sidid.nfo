@@ -588,9 +588,10 @@ Groo/Psygon
    AUTHOR: Claus Leth Gregersen (Groo)
 
 Groovy_Bits
+     NAME: Groovy Music
    AUTHOR: Lars Patrik Wallström (Karl XII)
  RELEASED: 1989 Groovy Bits
-REFERENCE: https://csdb.dk/release/?id=121370
+REFERENCE: https://csdb.dk/release/?id=121513
 
 Hansford/Interceptor
    AUTHOR: Graham Hansford
@@ -1330,6 +1331,11 @@ SidFactory/Laxity
  RELEASED: 2006
 REFERENCE: https://csdb.dk/release/?id=39519
 
+SidFactory_II/Laxity
+   AUTHOR: Thomas Egeskov Petersen (Laxity)
+ RELEASED: 2020
+REFERENCE: https://csdb.dk/release/?id=210571
+
 Sidplayer64
    AUTHOR: Craig Chamberlain
  RELEASED: 1985
@@ -1456,32 +1462,32 @@ REFERENCE: https://csdb.dk/release/?id=16309
 (DUSAT/RockMon2)
      NAME: Rock Monitor V2
    AUTHOR: Oscar Giesen (OPM)
- RELEASED: 1987 Dutch USA-Team
+ RELEASED: 1987 The Dutch USA-Team
 REFERENCE: https://csdb.dk/release/?id=20664
 
 (DUSAT/RockMon3)
      NAME: Rock Monitor V3
    AUTHOR: Oscar Giesen (OPM)
- RELEASED: 1987 Dutch USA-Team
+ RELEASED: 1987 The Dutch USA-Team
 REFERENCE: https://csdb.dk/release/?id=33038
 
 (DUSAT/RockMon4)
      NAME: Rock Monitor V4
    AUTHOR: Oscar Giesen (OPM)
- RELEASED: 1987 Dutch USA-Team
+ RELEASED: 1987 The Dutch USA-Team
 REFERENCE: https://csdb.dk/release/?id=20676
 
 (DUSAT/RockMon5.0)
      NAME: Rock Monitor V5
    AUTHOR: Oscar Giesen (OPM)
- RELEASED: 1988 Dutch USA-Team
+ RELEASED: 1988 The Dutch USA-Team
 REFERENCE: https://csdb.dk/release/?id=10632
   COMMENT: Later a 100% version of the editor/player was released.
 
 (DUSAT/RockMon5.1)
      NAME: Rock Monitor V5 100%
    AUTHOR: Oscar Giesen (OPM)
- RELEASED: 1988 Dutch USA-Team
+ RELEASED: 1988 The Dutch USA-Team
 REFERENCE: https://csdb.dk/release/?id=122393
   COMMENT: This is the 100% working version of Rock Monitor 5
 
