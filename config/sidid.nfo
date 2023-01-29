@@ -369,7 +369,7 @@ Ed_Bogas/Accolade
 Ed_Bogas/Hakansson
    AUTHOR: Ed Bogas
 
-Electro_Sound
+Electrosound
  RELEASED: 1985 Orpheus
 REFERENCE: https://csdb.dk/release/?id=27433
 
@@ -828,7 +828,7 @@ Longhair
 LordsOfSonics/MS
    AUTHOR: Markus Schneider
 
-(Comptech_V2.x)
+(Compotech_V2.x)
      NAME: Compotech
    AUTHOR: Markus Schneider & Helge Kozielek
  RELEASED: 1990 X-Ample Architectures
@@ -1321,10 +1321,14 @@ Sequencer
  RELEASED: 1985 64'er/Markt & Technik
 REFERENCE: https://csdb.dk/release/?id=129802
 
-Sidbang64/Warp8
+Sidbang64_1/Warp8
    AUTHOR: Sebastian Abel (Warp8)
  RELEASED: 2021
 REFERENCE: https://csdb.dk/release/?id=199203
+
+Sidbang64_2/Warp8
+   AUTHOR: Sebastian Abel (Warp8)
+  COMMENT: Probably an internal/unpublished version
 
 SidFactory/Laxity
    AUTHOR: Thomas Egeskov Petersen (Laxity)
@@ -1336,7 +1340,7 @@ SidFactory_II/Laxity
  RELEASED: 2020
 REFERENCE: https://csdb.dk/release/?id=210571
 
-Sidplayer64
+Sidplayer
    AUTHOR: Craig Chamberlain
  RELEASED: 1985
 REFERENCE: https://csdb.dk/release/?id=33248
@@ -1445,7 +1449,7 @@ REFERENCE: https://csdb.dk/release/?id=7536
 SounDemon
    AUTHOR: Otto Järvinen (SounDemoN)
 
-SoundMonitor
+Soundmonitor
    AUTHOR: Chris Hülsbeck
  RELEASED: 1986 64'er/Markt & Technik
 REFERENCE: https://csdb.dk/release/?id=59929
