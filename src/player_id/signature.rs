@@ -34,9 +34,7 @@ impl Signature {
             let mut last_index = start_offset;
 
             for config in &signature.bndm_configs {
-                let index = find_pattern(&source[last_index..], config);
-
-                if let Some(index) = index {
+                if let Some(index) = find_pattern(&source[last_index..], config) {
                     indexes.push(last_index + index);
                     last_index += index + config.pattern.len();
                 } else {
@@ -300,9 +298,9 @@ impl Signature {
 
                         if signature_text.eq_ignore_ascii_case("END") ||
                             signature_text.eq_ignore_ascii_case("AND") {
-                            eprintln!("Signature name cannot be a reserved word at line: {}\r", line_number);
+                            eprintln!("Signature name cannot be a reserved word at line: {line_number}\r");
                         } else {
-                            eprintln!("Signature found without a name: {}\r", signature_text);
+                            eprintln!("Signature found without a name: {signature_text}\r");
                         }
                     }
 
@@ -326,13 +324,13 @@ impl Signature {
 
                 if !signature_text.is_empty() {
                     error = true;
-                    eprintln!("Invalid signature found. Signature name should be at least 3 characters long and signature value line should have at least 2 valid characters: {}\r", signature_text);
+                    eprintln!("Invalid signature found. Signature name should be at least 3 characters long and signature value line should have at least 2 valid characters: {signature_text}\r");
                     signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
                 }
 
                 if line.is_empty() && last_empty_line_number == line_number - 1 {
                     error = true;
-                    eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                    eprintln!("Two consecutive empty lines found at line: {line_number}\r");
                 }
 
                 if error {
@@ -368,7 +366,7 @@ impl Signature {
             let signature_text = line.trim_end();
             if signature_text.len() != line.len() {
                 error = true;
-                eprintln!("Space(s) found at the end of the line on line: {}\r", line_number);
+                eprintln!("Space(s) found at the end of the line on line: {line_number}\r");
             }
 
             let signature_text = signature_text.trim();
@@ -376,7 +374,7 @@ impl Signature {
             if Self::is_info_tag(line) {
                 if !signature_name_found {
                     error = true;
-                    eprintln!("Info found without a signature name at line: {}\r", line_number);
+                    eprintln!("Info found without a signature name at line: {line_number}\r");
                     previous_tag = "".to_string();
                 }
 
@@ -397,7 +395,7 @@ impl Signature {
 
                 if signature_name_found && !info_line_found {
                     error = true;
-                    eprintln!("Signature name found without any info: {}\r", signature_name);
+                    eprintln!("Signature name found without any info: {signature_name}\r");
                 }
 
                 if let Some(position) = signature_text.find(':') {
@@ -417,12 +415,12 @@ impl Signature {
             } else {
                 if signature_name_found && !info_line_found {
                     error = true;
-                    eprintln!("Signature name found without any info: {}\r", signature_name);
+                    eprintln!("Signature name found without any info: {signature_name}\r");
                 }
 
                 if line.is_empty() && last_empty_line_number == line_number - 1 {
                     error = true;
-                    eprintln!("Two consecutive empty lines found at line: {}\r", line_number);
+                    eprintln!("Two consecutive empty lines found at line: {line_number}\r");
                 }
                 last_empty_line_number = line_number;
 
@@ -439,7 +437,7 @@ impl Signature {
 
         if !signatures.iter().any(|signature| signature.signature_name.eq(signature_name)) {
             error = true;
-            eprintln!("Signature ID not found in config file: {}\r", signature_name);
+            eprintln!("Signature ID not found in config file: {signature_name}\r");
         }
         error
     }
@@ -449,12 +447,12 @@ impl Signature {
 
         if signature_name.contains(' ') {
             error = true;
-            eprintln!("Signature name contains spaces or invalid signature value: {}\r", signature_name);
+            eprintln!("Signature name contains spaces or invalid signature value: {signature_name}\r");
         }
 
         if signature_names_added.contains_key(&signature_name.to_ascii_uppercase()) {
             error = true;
-            eprintln!("Signature defined more than once or with different casing: {}\r", signature_name);
+            eprintln!("Signature defined more than once or with different casing: {signature_name}\r");
         }
         error
     }
@@ -473,7 +471,7 @@ impl Signature {
             let has_signature_value = signature_names_added.get(&signature_name.to_ascii_uppercase());
             if !has_signature_value.unwrap() {
                 error = true;
-                eprintln!("Signature name found without a value: {}\r", signature_name);
+                eprintln!("Signature name found without a value: {signature_name}\r");
             }
         }
         error
@@ -483,10 +481,10 @@ impl Signature {
         let mut error = false;
         if line_length != signature_size {
             error = true;
-            eprintln!("Signature contains spaces at beginning or at the end of the line: {}\r", signature_name);
+            eprintln!("Signature contains spaces at beginning or at the end of the line: {signature_name}\r");
         } else if signature_value.contains("  ") {
             error = true;
-            eprintln!("Signature contains double spaces: {}\r", signature_name);
+            eprintln!("Signature contains double spaces: {signature_name}\r");
         }
         error
     }
@@ -498,18 +496,18 @@ impl Signature {
 
         if signature_text.ne(&signature_text_upper) {
             error = true;
-            eprintln!("Signature contains lowercase characters: {}\r", signature_name);
+            eprintln!("Signature contains lowercase characters: {signature_name}\r");
         }
 
         let signature_text_without_end = signature_text.replace(" END", "");
         if signature_text_without_end.len() <= 4 {
             error = true;
-            eprintln!("Invalid signature found. Signature value should have at least 2 values separated with a space: {}\r", signature_name);
+            eprintln!("Invalid signature found. Signature value should have at least 2 values separated with a space: {signature_name}\r");
         }
 
         if signature_text_without_end.ends_with(" AND") || signature_text_without_end.ends_with(" &&") {
             error = true;
-            eprintln!("Signature should not end with an AND or && operator: {}\r", signature_name);
+            eprintln!("Signature should not end with an AND or && operator: {signature_name}\r");
         }
 
         for signature in signature_text_upper.split(" AND ") {
@@ -526,32 +524,32 @@ impl Signature {
         while let Some((index, word)) = it.next() {
             if index == 255 {
                 error = true;
-                eprintln!("Signature cannot be larger than 254 bytes: {}\r", signature_name);
+                eprintln!("Signature cannot be larger than 254 bytes: {signature_name}\r");
             }
             match word {
                 "??" => {
                     if index == 0 || it.peek().is_none() || it.peek().unwrap().1.eq_ignore_ascii_case("END") {
                         error = true;
-                        eprintln!("Signature ID or SUB ID (with AND operator) should not begin or end with a wildcard: {}\r", signature_name);
+                        eprintln!("Signature ID or SUB ID (with AND operator) should not begin or end with a wildcard: {signature_name}\r");
                     }
                 },
                 "END" => {
                     if it.peek().is_some() {
                         error = true;
-                        eprintln!("Signature END operator can only be present at the end of the line: {}\r", signature_name);
+                        eprintln!("Signature END operator can only be present at the end of the line: {signature_name}\r");
                     }
                 },
                 "AND" | "&&" => {
                     if index == 0 {
                         error = true;
-                        eprintln!("Signature should not begin with an AND or && operator: {}\r", signature_name);
+                        eprintln!("Signature should not begin with an AND or && operator: {signature_name}\r");
                     }
                 },
                 _ => {
                     let valid_chars = word.bytes().all(|b| matches!(b, b'a'..=b'f' | b'A'..=b'F' | b'0'..=b'9'));
                     if !valid_chars || (!word.is_empty() && word.len() != 2) {
                         error = true;
-                        eprintln!("Unsupported value '{}' in signature: {}\r", word, signature_name);
+                        eprintln!("Unsupported value '{word}' in signature: {signature_name}\r");
                     }
                 }
             }
@@ -571,7 +569,7 @@ impl Signature {
 
         if tag.eq_ignore_ascii_case("REFERENCE:") && !value.trim().to_ascii_uppercase().starts_with("HTTP") {
             error = true;
-            eprintln!("Reference has an invalid URL in signature: {}\r", signature_name);
+            eprintln!("Reference has an invalid URL in signature: {signature_name}\r");
         }
         error
     }
@@ -582,7 +580,7 @@ impl Signature {
                 Self::validate_order(signature_name, tag, previous_tag)
             },
             _ => {
-                eprintln!("Invalid tag found '{}' in signature: {}\r", tag, signature_name);
+                eprintln!("Invalid tag found '{tag}' in signature: {signature_name}\r");
                 true
             }
         }
@@ -595,13 +593,13 @@ impl Signature {
 
             let mut error = tag_order <= previous_tag_order;
             if error {
-                eprintln!("Order of tags '{}' '{}' is not valid: {}\r", tag, previous_tag, signature_name);
+                eprintln!("Order of tags '{tag}' '{previous_tag}' is not valid: {signature_name}\r");
             }
 
             let multi_line_detected_on_non_comment = tag_order == 6 && previous_tag_order < 5;
             if multi_line_detected_on_non_comment {
                 error = true;
-                eprintln!("Multi-line not allowed for tag '{}' in: {}\r", previous_tag, signature_name);
+                eprintln!("Multi-line not allowed for tag '{previous_tag}' in: {signature_name}\r");
             }
             error
         } else {

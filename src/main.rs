@@ -28,7 +28,7 @@ fn main() {
     match run() {
         Ok(_) => {}
         Err(message) => {
-            eprintln!("ERROR: {}\r", message);
+            eprintln!("ERROR: {message}\r");
             exit(1);
         }
     }
@@ -121,7 +121,7 @@ fn run() -> Result<(), String> {
 
                 for (index, player) in file_matches.matches.iter().enumerate() {
                     let player_name = if config.display_hex_offset {
-                        let player_indexes = player.indexes.iter().map(|index| format!("${:04X}", index)).collect::<Vec<String>>();
+                        let player_indexes = player.indexes.iter().map(|index| format!("${index:04X}")).collect::<Vec<String>>();
                         format!("{} {}", player.signature_name, player_indexes.join(" "))
                     } else {
                         player.signature_name.to_string()
@@ -144,9 +144,9 @@ fn run() -> Result<(), String> {
     });
 
     println!("Summary:\r");
-    println!("Identified players    {:>9}\r", identified_players);
-    println!("Identified files      {:>9}\r", identified_files);
-    println!("Unidentified files    {:>9}\r", unidentified_files);
+    println!("Identified players    {identified_players:>9}\r");
+    println!("Identified files      {identified_files:>9}\r");
+    println!("Unidentified files    {unidentified_files:>9}\r");
     println!("Total files processed {:>9}\r", files.len());
 
     output_elapsed_time(start_time);

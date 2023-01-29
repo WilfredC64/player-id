@@ -53,7 +53,7 @@ impl Config {
                 "v" => verify_signatures = true,
                 "w" => convert_file_format = Some(argument[2..].to_string()),
                 "x" => display_hex_offset = true,
-                _ => return Err(format!("Unknown option: {}", argument))
+                _ => return Err(format!("Unknown option: {argument}"))
             }
         }
 
@@ -147,12 +147,12 @@ impl Config {
     fn parse_argument_number(arg_name: &str, arg_value: &str) -> Result<u32, String> {
         let number = match arg_value.parse::<u32>() {
             Ok(i) => i,
-            Err(_e) => return Err(format!("{} must be a valid number.", arg_name))
+            Err(_e) => return Err(format!("{arg_name} must be a valid number."))
         };
         if number > 0 {
             Ok(number)
         } else {
-            Err(format!("{} must be higher than 0.", arg_name))
+            Err(format!("{arg_name} must be higher than 0."))
         }
     }
 

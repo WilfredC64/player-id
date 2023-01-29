@@ -113,7 +113,7 @@ impl PlayerId {
 
         let write_result = fs::write(config_path, output_string);
         if let Err(write_error) = write_result {
-            return Err(format!("Error writing config file: {}", write_error));
+            return Err(format!("Error writing config file: {write_error}"));
         }
 
         eprintln!("Done!\r");
@@ -142,13 +142,13 @@ impl PlayerId {
                 }
 
                 output_string += &bndm_config.pattern.iter()
-                    .map(|b| {
+                    .map(|byte| {
                         if let Some(wildcard) = bndm_config.wildcard {
-                            if *b == wildcard {
+                            if *byte == wildcard {
                                 return "??".to_string();
                             }
                         }
-                        format!("{:02X}", b)
+                        format!("{byte:02X}")
                     })
                     .collect::<Vec<String>>()
                     .join(" ");
@@ -199,7 +199,7 @@ impl PlayerId {
             }
             Ok(issues_found)
         } else {
-            eprintln!("\r\nNo info file found: {}\r", config_path_string);
+            eprintln!("\r\nNo info file found: {config_path_string}\r");
             Ok(true)
         }
     }
@@ -220,7 +220,7 @@ impl PlayerId {
                 return Ok(default_config_file_path)
             }
         }
-        Err(format!("File doesn't exist: {}", filename))
+        Err(format!("File doesn't exist: {filename}"))
     }
 
     fn read_text_file(config_path: &PathBuf) -> Result<Vec<String>, String> {
