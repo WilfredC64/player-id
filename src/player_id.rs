@@ -55,11 +55,11 @@ impl PlayerId {
         let lines = Self::read_text_file(config_path)?;
         let signature_ids = Signature::read_config_lines(&lines, player_name)?;
         if signature_ids.is_empty() {
-            return if player_name.is_none() {
-                Err("No signature defined.".to_string())
+            return Err(if let Some(player_name) = player_name {
+                format!("No signature found with name: {}", player_name)
             } else {
-                Err(format!("No signature found with name: {}", player_name.unwrap()))
-            }
+                "No signature defined.".to_string()
+            })
         }
         Ok(signature_ids)
     }
@@ -97,11 +97,7 @@ impl PlayerId {
             return Err("Issues found in config file.".to_string());
         }
 
-        if new_format {
-            eprintln!("\r\nWriting signatures in new format.\r");
-        } else {
-            eprintln!("\r\nWriting signatures in old format.\r");
-        }
+        eprintln!("\r\nWriting signatures in {} format.\r", if new_format { "new" } else { "old" });
 
         let config_path = PlayerId::get_config_path(config_file)?;
         eprintln!("Writing config file to: {}\r", config_path.display());
@@ -211,25 +207,25 @@ impl PlayerId {
     }
 
     fn get_config_path_with_fallback(filename: &str) -> Result<PathBuf, String> {
-        let file = Path::new(filename).to_path_buf();
+        let file = Path::new(filename);
         if file.exists() {
-            return Ok(file)
-        } else {
-            let default_config_file_path = env::current_exe().unwrap().parent().unwrap().join(filename);
-            if default_config_file_path.exists() {
-                return Ok(default_config_file_path)
-            }
+            return Ok(file.to_path_buf())
         }
-        Err(format!("File doesn't exist: {filename}"))
+
+        let default_config_file_path = env::current_exe().map_err(|_| "Could not determine executable location")?
+            .parent().ok_or("Could not determine executable directory")?
+            .join(filename);
+
+        if default_config_file_path.exists() {
+            Ok(default_config_file_path)
+        } else {
+            Err(format!("File doesn't exist: {filename}"))
+        }
     }
 
     fn read_text_file(config_path: &PathBuf) -> Result<Vec<String>, String> {
         let lines = Self::read_lines(config_path);
-        if let Ok(lines) = lines {
-            return Ok(lines);
-        }
-
-        Err(format!("Error reading file: {}", config_path.display()))
+        lines.map_err(|_| format!("Error reading file: {}", config_path.display()))
     }
 
     fn read_lines(filename: &PathBuf) -> io::Result<Vec<String>> {
