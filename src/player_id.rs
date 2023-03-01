@@ -7,7 +7,7 @@ mod bndm;
 mod signature;
 
 use std::env;
-use std::fs::{self, File};
+use std::fs::{self, File, read};
 use std::io::{self, BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 
@@ -28,7 +28,7 @@ impl PlayerId {
     }
 
     pub fn find_players_in_file(filename: &str, signature_ids: &Vec<SignatureConfig>, scan_for_multiple: bool) -> Vec<SignatureMatch> {
-        if let Ok(data) = Self::read_file(filename) {
+        if let Ok(data) = read(filename) {
             let data_offset = Self::get_data_offset(filename, &data);
 
             Signature::find_signatures(&data, data_offset, signature_ids, scan_for_multiple)
@@ -234,7 +234,7 @@ impl PlayerId {
             DecodeReaderBytesBuilder::new()
                 .encoding(Some(WINDOWS_1252))
                 .build(file)).lines();
-        Ok(lines.flatten().collect::<Vec<String>>())
+        Ok(lines.flatten().collect())
     }
 
     fn get_first_few_lines_from_file(file: File) -> Vec<String> {
@@ -243,12 +243,6 @@ impl PlayerId {
                 .encoding(Some(WINDOWS_1252))
                 .build(file));
         let chunk = reader.take(1000);
-        chunk.lines().flatten().collect::<Vec<_>>()
-    }
-
-    fn read_file(filename: &str) -> io::Result<Vec<u8>> {
-        let mut data = vec![];
-        File::open(filename)?.read_to_end(&mut data)?;
-        Ok(data)
+        chunk.lines().flatten().collect()
     }
 }

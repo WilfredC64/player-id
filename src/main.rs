@@ -206,7 +206,7 @@ fn get_matched_filenames(config: &Config) -> Vec<String> {
             .into_iter()
             .filter_map(Result::ok)
             .map(|p| p.path().display().to_string())
-            .collect::<Vec<String>>()
+            .collect()
     } else {
         vec![]
     }
