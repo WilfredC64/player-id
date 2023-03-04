@@ -142,15 +142,15 @@ impl Config {
     }
 
     fn parse_argument_number(arg_name: &str, arg_value: &str) -> Result<u32, String> {
-        let number = match arg_value.parse::<u32>() {
-            Ok(i) => i,
-            Err(_e) => return Err(format!("{arg_name} must be a valid number."))
-        };
-        if number > 0 {
-            Ok(number)
-        } else {
-            Err(format!("{arg_name} must be higher than 0."))
-        }
+        arg_value.parse::<u32>()
+            .map_err(|_| format!("{arg_name} must be a valid number."))
+            .and_then(|number| {
+                if number > 0 {
+                    Ok(number)
+                } else {
+                    Err(format!("{arg_name} must be higher than 0."))
+                }
+            })
     }
 
     fn split_file_path(filename: &str) -> (String, String) {
