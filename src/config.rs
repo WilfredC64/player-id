@@ -106,20 +106,17 @@ impl Config {
     }
 
     fn validate_player_name(player_name: Option<&String>) -> Result<(), String> {
-        if player_name.is_some() && player_name.unwrap().is_empty() {
-            return Err("Player name cannot be empty.".to_string());
+        match player_name {
+            Some(name) if name.is_empty() => Err("Player name cannot be empty.".to_string()),
+            _ => Ok(()),
         }
-        Ok(())
     }
 
     fn validate_file_format_option(file_format: &Option<String>) -> Result<(), String> {
-        if let Some(file_format) = file_format {
-            match file_format.as_str() {
-                "o" | "n" => {},
-                _ => return Err("Output format should be specified with -wo for old format or -wn for new format".to_string())
-            }
+        match file_format.as_deref() {
+            None | Some("o") | Some("n") => Ok(()),
+            _ => Err("Output format should be specified with -wo for old format or -wn for new format".to_string())
         }
-        Ok(())
     }
 
     fn set_hvsc_config(recursive: &mut bool, base_path: &mut String, filename: &mut String) -> Result<(), String> {
