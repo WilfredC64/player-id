@@ -1,4 +1,4 @@
-// Copyright (C) 2019 - 2022 Wilfred Bos
+// Copyright (C) 2019 - 2023 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 use std::cmp::min;
@@ -100,11 +100,9 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
 }
 
 fn find_remaining(source: &[u8], start_index: usize, search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
-    if let Some(wildcard) = wildcard {
-        search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| source[start_index + index] == *pattern_byte || *pattern_byte == *wildcard)
-    } else {
-        search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| source[start_index + index] == *pattern_byte)
-    }
+    search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| {
+        source[start_index + index] == *pattern_byte || wildcard.map_or(false, |w| *pattern_byte == w)
+    })
 }
 
 fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
@@ -112,24 +110,20 @@ fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
 }
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize {
-    let mut mask = 0;
-
-    if let Some(wildcard) = wildcard {
+    wildcard.map_or(0, |wildcard| {
         let len = get_pattern_length_within_cpu_word(search_pattern);
 
         search_pattern.iter().take(len)
-            .for_each(|pattern_byte| mask = mask << 1 | (*pattern_byte == wildcard) as usize);
-    }
-    mask
+            .fold(0, |mask, &pattern_byte| (mask << 1) | (pattern_byte == wildcard) as usize)
+    })
 }
 
 fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
-
     let len = get_pattern_length_within_cpu_word(search_pattern);
 
     search_pattern.iter().take(len).rev().enumerate()
-        .for_each(|(i, pattern_byte)| masks[*pattern_byte as usize] |= 1 << i);
+        .for_each(|(i, &pattern_byte)| masks[pattern_byte as usize] |= 1 << i);
 
     masks
 }
