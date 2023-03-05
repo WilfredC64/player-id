@@ -1,4 +1,4 @@
-// Copyright (C) 2020 - 2022 Wilfred Bos
+// Copyright (C) 2020 - 2023 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 pub const MIN_SID_HEADER_SIZE: usize = 0x76;
@@ -7,8 +7,7 @@ const DATA_OFFSET_OFFSET: usize = 0x06;
 const LOAD_ADDRESS_OFFSET: usize = 0x08;
 
 pub fn is_sid_file(source: &[u8]) -> bool {
-    source.len() >= MIN_SID_HEADER_SIZE &&
-        (source[0] == b'R' || source[0] == b'P') && source[1] == b'S' && source[2] == b'I' && source[3] == b'D'
+    source.len() >= MIN_SID_HEADER_SIZE && matches!(&source[0..4], b"RSID" | b"PSID")
 }
 
 pub fn get_data_offset(source: &[u8]) -> usize {

@@ -1,4 +1,4 @@
-// Copyright (C) 2019 - 2022 Wilfred Bos
+// Copyright (C) 2019 - 2023 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 mod config;
@@ -9,7 +9,7 @@ mod player_id;
 use self::config::Config;
 use self::player_id::{PlayerId, SignatureConfig, SignatureMatch};
 
-use std::cmp::{max, min};
+use std::cmp::min;
 use std::collections::HashMap;
 use std::env;
 use std::process::exit;
@@ -82,17 +82,15 @@ fn run() -> Result<(), String> {
     pool.install(|| {
         let matches: Vec<FileMatches> = files
             .par_iter()
-            .map(|filename| {
+            .filter_map(|filename| {
                 let matches = PlayerId::find_players_in_file(filename, &signature_ids, config.scan_for_multiple);
 
-                FileMatches {
+                ((matches.is_empty() && (config.only_list_unidentified || config.list_unidentified)) ||
+                (!matches.is_empty() && !config.only_list_unidentified)).then_some(FileMatches {
                     matches,
-                    filename: filename.to_owned()
-                }
+                    filename: filename.to_owned(),
+                })
             })
-            .filter(|info|
-                (info.matches.is_empty() && (config.only_list_unidentified || config.list_unidentified)) ||
-                (!info.matches.is_empty() && !config.only_list_unidentified))
             .collect();
 
         let filename_strip_length = get_filename_strip_length(config.base_path, &files);
@@ -136,14 +134,18 @@ fn run() -> Result<(), String> {
             }
         }
 
-        unidentified_files = files.len() - identified_files;
+        if identified_files == 0 {
+            unidentified_files = matches.len();
+        } else {
+            unidentified_files = files.len() - identified_files;
+        }
 
         if identified_files > 0 {
             output_occurrence_statistics(&signature_ids, &matches);
         }
     });
 
-    println!("Summary:\r");
+    println!("\rSummary:\r");
     println!("Identified players    {identified_players:>9}\r");
     println!("Identified files      {identified_files:>9}\r");
     println!("Unidentified files    {unidentified_files:>9}\r");
@@ -183,8 +185,6 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
             }
         }
     }
-
-    println!("\r");
 }
 
 fn load_signatures(config: &Config) -> Result<Vec<SignatureConfig>, String> {
@@ -214,10 +214,8 @@ fn get_matched_filenames(config: &Config) -> Vec<String> {
 
 fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
     if !truncate_filenames {
-        let longest_filename = players_found.iter().max_by(|x, y| x.filename.len().cmp(&y.filename.len()));
-        if let Some(longest_filename) = longest_filename {
-            let filename_width = longest_filename.filename.len() - filename_strip_length;
-            return max(filename_width, DEFAULT_FILENAME_COL_WIDTH)
+        if let Some(longest_filename_length) = players_found.iter().map(|fm| fm.filename.len()).max() {
+            return (longest_filename_length - filename_strip_length).max(DEFAULT_FILENAME_COL_WIDTH);
         }
     }
     DEFAULT_FILENAME_COL_WIDTH
