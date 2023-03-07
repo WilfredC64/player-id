@@ -93,7 +93,7 @@ fn run() -> Result<(), String> {
             })
             .collect();
 
-        let filename_strip_length = get_filename_strip_length(config.base_path, &files);
+        let filename_strip_length = get_filename_strip_length(&config.base_path, &files);
         let filename_width = calculate_filename_width(config.truncate_filenames, &matches, filename_strip_length);
 
         for file_matches in &matches {
@@ -168,11 +168,10 @@ fn output_occurrence_statistics(signature_ids: &Vec<SignatureConfig>, player_inf
     println!("\r\nDetected players          Count\r");
     println!("-------------------------------\r");
 
-    let mut player_occurrence: HashMap<String, i32> = HashMap::new();
+    let mut player_occurrence = HashMap::new();
     for players in player_info {
         for player in &players.matches {
-            let occurrence: i32 = *player_occurrence.get(&player.signature_name).unwrap_or(&0);
-            player_occurrence.insert(player.signature_name.to_owned(), occurrence + 1);
+            *player_occurrence.entry(player.signature_name.to_owned()).or_insert(0) += 1;
         }
     }
 
@@ -195,21 +194,21 @@ fn load_signatures(config: &Config) -> Result<Vec<SignatureConfig>, String> {
 }
 
 fn get_matched_filenames(config: &Config) -> Vec<String> {
+    if config.filename.is_empty() {
+        return vec![];
+    }
+
     let max_depth = if config.recursive { usize::MAX } else { 1 };
 
-    if !config.filename.is_empty() {
-        globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
-            .max_depth(max_depth)
-            .case_insensitive(true)
-            .sort_by(|a, b| a.file_name().cmp(b.file_name()))
-            .build().unwrap()
-            .into_iter()
-            .filter_map(Result::ok)
-            .map(|p| p.path().display().to_string())
-            .collect()
-    } else {
-        vec![]
-    }
+    globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
+        .max_depth(max_depth)
+        .case_insensitive(true)
+        .sort_by(|a, b| a.file_name().cmp(b.file_name()))
+        .build().unwrap()
+        .into_iter()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path().display().to_string())
+        .collect()
 }
 
 fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
@@ -221,13 +220,13 @@ fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatch
     DEFAULT_FILENAME_COL_WIDTH
 }
 
-fn get_filename_strip_length(base_path: String, files: &[String]) -> usize {
+fn get_filename_strip_length(base_path: &str, files: &[String]) -> usize {
     if let Some(first_file) = files.first() {
         if let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
-            return hvsc_root.len() + 1
+            return hvsc_root.len() + 1;
         }
     }
-    if base_path.eq(".") { 2 } else { 0 }
+    if base_path == "." { 2 } else { 0 }
 }
 
 fn display_player_info(config: &Config) -> Result<(), String> {
