@@ -205,7 +205,6 @@ fn get_matched_filenames(config: &Config) -> Vec<String> {
         .case_insensitive(true)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()))
         .build().unwrap()
-        .into_iter()
         .filter_map(Result::ok)
         .map(|entry| entry.path().display().to_string())
         .collect()
