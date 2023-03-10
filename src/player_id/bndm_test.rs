@@ -291,6 +291,26 @@ fn find_pattern_longer_than_source() {
 }
 
 #[test]
+fn find_pattern_same_size_source() {
+    let source = b"Lorem ipsum dolor sit amet, consectetur";
+    let pattern = b"consectetur adipiscing elit, sed do eiu";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, None);
+}
+
+#[test]
+fn find_pattern_same_size_source_and_equal() {
+    let source = b"Lorem ipsum dolor sit amet, consectetur";
+    let pattern = b"Lorem ipsum dolor sit amet, consectetur";
+    let config = BndmConfig::new(pattern, None);
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(0));
+}
+
+#[test]
 fn find_pattern_in_empty_source() {
     let source = b"";
     let pattern = b"consectetur adipiscing elit, sed do eiusmod tempor incididunt";
