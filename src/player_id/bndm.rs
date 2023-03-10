@@ -28,17 +28,17 @@ pub fn find_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     match config.pattern.len() {
         0 => None,
         1 => source.iter().position(|&x| x == config.pattern[0]),
-        x if x > source.len() => None,
-        x if x > WORD_SIZE_IN_BITS => find_large_pattern(source, config),
-        _ => find_small_pattern(source, config)
+        _ => find_pattern_bndm(source, config)
     }
 }
 
-/// finds patterns up to CPU word size
-fn find_small_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
-    let len = config.pattern.len() - 1;
-    let end = source.len() - len;
-    let masks = &config.masks;
+fn find_pattern_bndm(source: &[u8], config: &BndmConfig) -> Option<usize> {
+    if config.pattern.len() > source.len() {
+        return None;
+    }
+
+    let len = get_pattern_length_within_cpu_word(&config.pattern) - 1;
+    let end = source.len() - (&config.pattern.len() - 1);
     let df = 1 << len;
     let mut i = 0;
 
@@ -46,52 +46,20 @@ fn find_small_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
         let mut j = len;
         let mut last = len;
 
-        let mut d = masks[source[i + j] as usize];
-        d = (d << 1) & masks[source[i + j - 1] as usize];
+        let mut d = config.masks[source[i + j] as usize];
+        d = (d << 1) & config.masks[source[i + j - 1] as usize];
         while d != 0 {
             j -= 1;
             if d & df != 0 {
                 if j == 0 {
-                    return Some(i);
-                }
-                last = j;
-            }
-            d = (d << 1) & masks[source[i + j - 1] as usize];
-        }
-
-        i += last;
-    }
-    None
-}
-
-/// finds patterns larger than CPU word size
-fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
-    let len = WORD_SIZE_IN_BITS - 1;
-    let end = source.len() - (config.pattern.len() - 1);
-    let masks = &config.masks;
-    let pattern = &config.pattern;
-    let wildcard = &config.wildcard;
-    let df = 1 << len;
-    let mut i = 0;
-
-    while i < end {
-        let mut j = len;
-        let mut last = len;
-
-        let mut d = masks[source[i + j] as usize];
-        d = (d << 1) & masks[source[i + j - 1] as usize];
-        while d != 0 {
-            j -= 1;
-            if d & df != 0 {
-                if j == 0 {
-                    if find_remaining(source, i + WORD_SIZE_IN_BITS, pattern, wildcard) {
+                    if find_remaining(source, i + WORD_SIZE_IN_BITS, config) {
                         return Some(i);
                     }
                     j += 1;
                 }
                 last = j;
             }
-            d = (d << 1) & masks[source[i + j - 1] as usize];
+            d = (d << 1) & config.masks[source[i + j - 1] as usize];
         }
 
         i += last;
@@ -99,9 +67,9 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     None
 }
 
-fn find_remaining(source: &[u8], start_index: usize, search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
-    search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, &pattern_byte)| {
-        source[start_index + index] == pattern_byte || wildcard.map_or(false, |w| pattern_byte == w)
+fn find_remaining(source: &[u8], start_index: usize, config: &BndmConfig) -> bool {
+    config.pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, &pattern_byte)| {
+        source[start_index + index] == pattern_byte || config.wildcard.map_or(false, |w| pattern_byte == w)
     })
 }
 
