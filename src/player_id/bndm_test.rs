@@ -291,9 +291,9 @@ fn find_pattern_longer_than_source() {
 }
 
 #[test]
-fn find_pattern_same_size_source() {
+fn find_pattern_same_size_source_no_match_at_end() {
     let source = b"Lorem ipsum dolor sit amet, consectetur";
-    let pattern = b"consectetur adipiscing elit, sed do eiu";
+    let pattern = b"Lorem ipsum dolor sit amet, consectetuR";
     let config = BndmConfig::new(pattern, None);
     let index = find_pattern(source, &config);
 
@@ -301,10 +301,10 @@ fn find_pattern_same_size_source() {
 }
 
 #[test]
-fn find_pattern_same_size_source_and_equal() {
+fn find_pattern_same_size_source_wildcard_at_end() {
     let source = b"Lorem ipsum dolor sit amet, consectetur";
-    let pattern = b"Lorem ipsum dolor sit amet, consectetur";
-    let config = BndmConfig::new(pattern, None);
+    let pattern = b"Lorem ipsum dolor sit amet, consectetu!";
+    let config = BndmConfig::new(pattern, Some(b'!'));
     let index = find_pattern(source, &config);
 
     assert_eq!(index, Some(0));
