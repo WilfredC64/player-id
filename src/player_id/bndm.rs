@@ -100,8 +100,8 @@ fn find_large_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
 }
 
 fn find_remaining(source: &[u8], start_index: usize, search_pattern: &[u8], wildcard: &Option<u8>) -> bool {
-    search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, pattern_byte)| {
-        source[start_index + index] == *pattern_byte || wildcard.map_or(false, |w| *pattern_byte == w)
+    search_pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, &pattern_byte)| {
+        source[start_index + index] == pattern_byte || wildcard.map_or(false, |w| pattern_byte == w)
     })
 }
 
