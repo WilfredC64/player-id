@@ -14,10 +14,10 @@ pub struct BndmConfig {
 
 impl BndmConfig {
     pub fn new(search_pattern: &[u8], wildcard: Option<u8>) -> BndmConfig {
-        let wildcard_mask = calculate_wildcard_mask(search_pattern, wildcard);
+        let len = get_pattern_length_within_cpu_word(search_pattern);
 
         BndmConfig {
-            masks: generate_masks(search_pattern, wildcard_mask),
+            masks: generate_masks(&search_pattern[..len], wildcard),
             wildcard,
             pattern: search_pattern.to_owned()
         }
@@ -68,9 +68,9 @@ fn find_pattern_bndm(source: &[u8], config: &BndmConfig) -> Option<usize> {
 }
 
 fn find_remaining(source: &[u8], start_index: usize, config: &BndmConfig) -> bool {
-    config.pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, &pattern_byte)| {
+    config.pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().rev().all(|(index, &pattern_byte)|
         source[start_index + index] == pattern_byte || config.wildcard.map_or(false, |w| pattern_byte == w)
-    })
+    )
 }
 
 fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
@@ -78,19 +78,15 @@ fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
 }
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize {
-    wildcard.map_or(0, |wildcard| {
-        let len = get_pattern_length_within_cpu_word(search_pattern);
-
-        search_pattern.iter().take(len)
-            .fold(0, |mask, &pattern_byte| (mask << 1) | (pattern_byte == wildcard) as usize)
-    })
+    wildcard.map_or(0, |wildcard| search_pattern.iter()
+        .fold(0, |mask, &pattern_byte| (mask << 1) | (pattern_byte == wildcard) as usize))
 }
 
-fn generate_masks(search_pattern: &[u8], default_mask: usize) -> [usize; MASKS_TABLE_SIZE] {
+fn generate_masks(search_pattern: &[u8], wildcard: Option<u8>) -> [usize; MASKS_TABLE_SIZE] {
+    let default_mask = calculate_wildcard_mask(search_pattern, wildcard);
     let mut masks = [default_mask; MASKS_TABLE_SIZE];
-    let len = get_pattern_length_within_cpu_word(search_pattern);
 
-    search_pattern.iter().take(len).rev().enumerate()
+    search_pattern.iter().rev().enumerate()
         .for_each(|(i, &pattern_byte)| masks[pattern_byte as usize] |= 1 << i);
 
     masks
