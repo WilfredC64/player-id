@@ -14,7 +14,7 @@ pub struct BndmConfig {
 
 impl BndmConfig {
     pub fn new(search_pattern: &[u8], wildcard: Option<u8>) -> BndmConfig {
-        let len = get_pattern_length_within_cpu_word(search_pattern);
+        let len = get_pattern_length_within_cpu_word(search_pattern.len());
 
         BndmConfig {
             masks: generate_masks(&search_pattern[..len], wildcard),
@@ -37,29 +37,29 @@ fn find_pattern_bndm(source: &[u8], config: &BndmConfig) -> Option<usize> {
         return None;
     }
 
-    let len = get_pattern_length_within_cpu_word(&config.pattern) - 1;
-    let end = source.len() - (&config.pattern.len() - 1);
+    let len = get_pattern_length_within_cpu_word(config.pattern.len()) - 1;
+    let end = source.len() - config.pattern.len();
     let df = 1 << len;
     let mut i = 0;
 
-    while i < end {
+    while i <= end {
         let mut j = len;
         let mut last = len;
 
-        let mut d = config.masks[source[i + j] as usize];
-        d = (d << 1) & config.masks[source[i + j - 1] as usize];
+        let mut d = get_mask(source, config, i + j);
+        d = (d << 1) & get_mask(source, config, i + j - 1);
         while d != 0 {
             j -= 1;
             if d & df != 0 {
                 if j == 0 {
-                    if find_remaining(source, i + WORD_SIZE_IN_BITS, config) {
+                    if find_remaining(source, config, i + WORD_SIZE_IN_BITS) {
                         return Some(i);
                     }
                     j += 1;
                 }
                 last = j;
             }
-            d = (d << 1) & config.masks[source[i + j - 1] as usize];
+            d = (d << 1) & get_mask(source, config, i + j - 1);
         }
 
         i += last;
@@ -67,14 +67,20 @@ fn find_pattern_bndm(source: &[u8], config: &BndmConfig) -> Option<usize> {
     None
 }
 
-fn find_remaining(source: &[u8], start_index: usize, config: &BndmConfig) -> bool {
-    config.pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().all(|(index, &pattern_byte)|
-        source[start_index + index] == pattern_byte || config.wildcard.map_or(false, |w| pattern_byte == w)
-    )
+fn get_mask(source: &[u8], config: &BndmConfig, index: usize) -> usize {
+    unsafe {
+        *config.masks.get_unchecked(*source.get_unchecked(index) as usize)
+    }
 }
 
-fn get_pattern_length_within_cpu_word(search_pattern: &[u8]) -> usize {
-    min(search_pattern.len(), WORD_SIZE_IN_BITS)
+fn find_remaining(source: &[u8], config: &BndmConfig, start_index: usize) -> bool {
+    config.pattern.iter().skip(WORD_SIZE_IN_BITS).enumerate().all(|(index, &pattern_byte)| unsafe {
+        *source.get_unchecked(start_index + index) == pattern_byte || config.wildcard.map_or(false, |w| pattern_byte == w)
+    })
+}
+
+fn get_pattern_length_within_cpu_word(search_pattern_length: usize) -> usize {
+    min(search_pattern_length, WORD_SIZE_IN_BITS)
 }
 
 fn calculate_wildcard_mask(search_pattern: &[u8], wildcard: Option<u8>) -> usize {
