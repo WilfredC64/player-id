@@ -111,9 +111,19 @@ fn find_pattern_wildcard_multiple() {
 }
 
 #[test]
-fn find_pattern_wildcard_only() {
+fn find_pattern_wildcards_only() {
     let source = b"The quick brown fox jumps over the lazy dog";
     let pattern = b"??????";
+    let config = BndmConfig::new(pattern, Some(b'?'));
+    let index = find_pattern(source, &config);
+
+    assert_eq!(index, Some(0));
+}
+
+#[test]
+fn find_pattern_wildcard_only() {
+    let source = b"The quick brown fox jumps over the lazy dog";
+    let pattern = b"?";
     let config = BndmConfig::new(pattern, Some(b'?'));
     let index = find_pattern(source, &config);
 
