@@ -174,7 +174,7 @@ The signature file format specification can be found [here](/doc/Signature_File_
 
 ## Copyright
 
-Player-ID &ndash; Copyright &#xa9; 2012 - 2022 by Wilfred Bos.
+Player-ID &ndash; Copyright &#xa9; 2012 - 2023 by Wilfred Bos.
 
 Signatures created by: Wilfred Bos, iAN CooG, Professor Chaos, Cadaver, Ninja, Ice00 and Yodelking.
 
