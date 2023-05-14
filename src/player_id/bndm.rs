@@ -28,7 +28,7 @@ pub fn find_pattern(source: &[u8], config: &BndmConfig) -> Option<usize> {
     match config.pattern.len() {
         0 => None,
         1 => config.wildcard
-                .map_or(false, |w| config.pattern[0] == w).then_some(0)
+                .map_or(false, |w| w == config.pattern[0]).then_some(0)
                 .or_else(|| source.iter().position(|&s| s == config.pattern[0])),
         _ => find_pattern_bndm(source, config)
     }
