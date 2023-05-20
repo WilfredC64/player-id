@@ -244,7 +244,7 @@ fn display_player_info(config: &Config) -> Result<(), String> {
 }
 
 fn print_usage() {
-    println!("C64 Music Player Identifier (PI) v2.0 - Copyright (c) 2012-2022 Wilfred Bos\r\n\r");
+    println!("C64 Music Player Identifier (PI) v2.01 - Copyright (c) 2012-2023 Wilfred Bos\r\n\r");
     println!("Usage: player-id <options> <file_path_pattern>\r\n\r");
     println!("<Options>\r");
     println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]\r");
