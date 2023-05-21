@@ -145,7 +145,7 @@ fn run() -> Result<(), String> {
         }
     });
 
-    println!("\rSummary:\r");
+    println!("\r\nSummary:\r");
     println!("Identified players    {identified_players:>9}\r");
     println!("Identified files      {identified_files:>9}\r");
     println!("Unidentified files    {unidentified_files:>9}\r");
