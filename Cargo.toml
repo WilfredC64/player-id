@@ -1,12 +1,12 @@
 [package]
 name = "player-id"
-version = "2.0.0"
+version = "2.0.1"
 authors = ["Wilfred Bos"]
 description = "Utility to identify Commodore 64 music players in SID files"
 readme = "README.md"
 edition = "2021"
 license = "MIT"
-keywords = ["C64 Music Player Identifier", "sidid", "playerid", "player-id", "pi"]
+keywords = ["player-identifier", "sidid", "playerid", "player-id", "pi"]
 build = "build.rs"
 
 [dependencies]
