@@ -10,7 +10,7 @@ keywords = ["player-identifier", "sidid", "playerid", "player-id", "pi"]
 build = "build.rs"
 
 [dependencies]
-encoding_rs = "0.8.32"
+encoding_rs = "0.8.33"
 encoding_rs_io = "0.1.7"
 globwalk = "0.8.1"
 rayon = "1.7.0"
