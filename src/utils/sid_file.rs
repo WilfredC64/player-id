@@ -11,7 +11,7 @@ pub fn is_sid_file(source: &[u8]) -> bool {
 }
 
 pub fn get_data_offset(source: &[u8]) -> usize {
-    let mut data_offset = u16::from_be_bytes(source[DATA_OFFSET_OFFSET..DATA_OFFSET_OFFSET + 2].try_into().unwrap()) as usize;
+    let mut data_offset = u16::from_be_bytes([source[DATA_OFFSET_OFFSET], source[DATA_OFFSET_OFFSET + 1]]) as usize;
     if data_offset >= MIN_SID_HEADER_SIZE && data_offset <= source.len() {
         if source[LOAD_ADDRESS_OFFSET] == 0 && source[LOAD_ADDRESS_OFFSET + 1] == 0 {
             data_offset += LOAD_ADDRESS_SIZE;
