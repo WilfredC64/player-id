@@ -1,26 +1,22 @@
 // Copyright (C) 2020 - 2023 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
-pub const MIN_SID_HEADER_SIZE: usize = 0x76;
-
+const MIN_SID_HEADER_SIZE: usize = 0x76;
 const DATA_OFFSET_OFFSET: usize = 0x06;
 const LOAD_ADDRESS_OFFSET: usize = 0x08;
+const LOAD_ADDRESS_SIZE: usize = 2;
 
 pub fn is_sid_file(source: &[u8]) -> bool {
     source.len() >= MIN_SID_HEADER_SIZE && matches!(&source[0..4], b"RSID" | b"PSID")
 }
 
 pub fn get_data_offset(source: &[u8]) -> usize {
-    if source.len() >= MIN_SID_HEADER_SIZE {
-        let header_size = ((source[DATA_OFFSET_OFFSET] as usize) << 8) + source[DATA_OFFSET_OFFSET + 1] as usize;
-        if header_size >= MIN_SID_HEADER_SIZE && header_size <= source.len() {
-            let has_load_address_in_data = source[LOAD_ADDRESS_OFFSET] == 0 && source[LOAD_ADDRESS_OFFSET + 1] == 0;
-            return if has_load_address_in_data {
-                header_size + 2
-            } else {
-                header_size
-            }
+    let mut data_offset = u16::from_be_bytes(source[DATA_OFFSET_OFFSET..DATA_OFFSET_OFFSET + 2].try_into().unwrap()) as usize;
+    if data_offset >= MIN_SID_HEADER_SIZE && data_offset <= source.len() {
+        if source[LOAD_ADDRESS_OFFSET] == 0 && source[LOAD_ADDRESS_OFFSET + 1] == 0 {
+            data_offset += LOAD_ADDRESS_SIZE;
         }
+        return data_offset
     }
     0
 }
