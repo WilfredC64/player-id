@@ -546,7 +546,7 @@ impl Signature {
                     }
                 },
                 _ => {
-                    let valid_chars = word.bytes().all(|b| matches!(b, b'a'..=b'f' | b'A'..=b'F' | b'0'..=b'9'));
+                    let valid_chars = word.bytes().all(|b| b.is_ascii_hexdigit());
                     if !valid_chars || (!word.is_empty() && word.len() != 2) {
                         error = true;
                         eprintln!("Unsupported value '{word}' in signature: {signature_name}\r");
