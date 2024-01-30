@@ -12,8 +12,8 @@ build = "build.rs"
 [dependencies]
 encoding_rs = "0.8.33"
 encoding_rs_io = "0.1.7"
-globwalk = "0.9.0"
-rayon = "1.8.0"
+globwalk = "0.9.1"
+rayon = "1.8.1"
 str-utils = "0.1.7"
 substring = "1.4.5"
 
@@ -22,7 +22,7 @@ winres = "0.1"
 
 [package.metadata.winres]
 ProductName = "Player-ID"
-LegalCopyright = "Copyright © 2012 - 2023 Wilfred Bos"
+LegalCopyright = "Copyright © 2012 - 2024 Wilfred Bos"
 
 [profile.release]
 codegen-units = 1
