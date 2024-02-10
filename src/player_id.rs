@@ -234,7 +234,7 @@ impl PlayerId {
             DecodeReaderBytesBuilder::new()
                 .encoding(Some(WINDOWS_1252))
                 .build(file)).lines();
-        Ok(lines.flatten().collect())
+        Ok(lines.map_while(Result::ok).collect())
     }
 
     fn get_first_few_lines_from_file(file: File) -> Vec<String> {
@@ -243,6 +243,6 @@ impl PlayerId {
                 .encoding(Some(WINDOWS_1252))
                 .build(file));
         let chunk = reader.take(1000);
-        chunk.lines().flatten().collect()
+        chunk.lines().map_while(Result::ok).collect()
     }
 }
