@@ -44,7 +44,7 @@ impl Signature {
             }
 
             if index_found {
-                matches.push(SignatureMatch { signature_name: signature.signature_name.to_owned(), indexes });
+                matches.push(SignatureMatch { signature_name: signature.signature_name.to_string(), indexes });
 
                 if !scan_for_multiple {
                     break;
@@ -103,13 +103,13 @@ impl Signature {
         for line in lines {
             if Self::is_signature_min_length(line) {
                 if Self::is_info_tag(line) {
-                    info_lines.push(line.to_owned());
+                    info_lines.push(line.to_string());
                 } else if Self::is_signature_name(line) {
                     if !signature_name.is_empty() {
                         signature_infos.push((signature_name, info_lines.to_owned()));
                     }
                     info_lines.clear();
-                    signature_name = line.to_owned();
+                    signature_name = line.to_string();
                 } else {
                     signature_infos.push((signature_name, info_lines.to_owned()));
                     info_lines.clear();
@@ -386,7 +386,7 @@ impl Signature {
                 error |= Self::validate_info_tag_value(&signature_name, tag, value);
 
                 if !tag.is_empty() {
-                    previous_tag = tag.to_owned();
+                    previous_tag = tag.to_string();
                 }
 
                 info_line_found = true;
@@ -407,7 +407,7 @@ impl Signature {
                 error |= Self::validate_signature_name(signature_text, &signature_names_added);
 
                 previous_tag = "".to_string();
-                signature_name = signature_text.to_owned();
+                signature_name = signature_text.to_string();
                 signature_names_added.insert(signature_text.to_ascii_uppercase(), true);
 
                 signature_name_found = true;
