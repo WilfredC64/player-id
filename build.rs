@@ -9,6 +9,9 @@ fn main() {
         res.compile().unwrap();
     }
 
+    println!("cargo:rerun-if-changed=./config/sidid.cfg");
+    println!("cargo:rerun-if-changed=./config/tedid.cfg");
+    println!("cargo:rerun-if-changed=./config/sidid.nfo");
     copy_config_to_build_folder();
 }
 
