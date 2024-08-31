@@ -1264,6 +1264,9 @@ Quantum_Soundtracker
    AUTHOR: Aleksi Eeben
  RELEASED: 2024 Aleksi Eeben
 REFERENCE: https://csdb.dk/release/?id=245053
+  COMMENT: The player uses a technique to play 8-bit samples at 16kHz via the
+           volume register of the SID and is based on the principles from the
+           renowned Mahoney/Tufvesson 8-bit DAC routine.
 
 Rastelin/Bones
    AUTHOR: Jacob Surland (Rastelin)
