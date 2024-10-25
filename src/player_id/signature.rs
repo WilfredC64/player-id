@@ -164,7 +164,7 @@ impl Signature {
 
     pub fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
-            let chars = signature_text_line[0..11].as_bytes();
+            let chars = &signature_text_line.as_bytes()[0..11];
             (chars[9] == b':' && chars[10] == b' ') || &chars == b"           "
         } else {
             false
@@ -173,11 +173,11 @@ impl Signature {
 
     pub fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
-            let signature_first_3chars = &signature_text_line[..3].as_bytes();
-            return signature_first_3chars[2] != b' ' &&
-                (signature_text_line.len() > 3 || signature_first_3chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none());
+            let chars = &signature_text_line.as_bytes()[..3];
+            chars[2] != b' ' && (chars.len() > 3 || chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none())
+        } else {
+            false
         }
-        false
     }
 
     fn process_multi_signatures(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
