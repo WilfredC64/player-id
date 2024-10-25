@@ -5,6 +5,7 @@
 
 mod bndm;
 mod signature;
+mod validate;
 
 use std::env;
 use std::fs::{self, File, read};
@@ -166,7 +167,7 @@ impl PlayerId {
         eprintln!("Verify config file: {}\r\n\r", config_path.display());
 
         let lines = Self::read_text_file(&config_path)?;
-        let issues_found = Signature::verify_config_file(&lines)?;
+        let issues_found = validate::verify_config_file(&lines)?;
 
         if !issues_found {
             eprintln!("No issues found in configuration.\r");
@@ -188,7 +189,7 @@ impl PlayerId {
             eprintln!("Verify info file: {}\r\n\r", config_path.display());
 
             let lines = Self::read_text_file(&config_path)?;
-            let issues_found = Signature::verify_info_file(&lines, &signature_ids)?;
+            let issues_found = validate::verify_info_file(&lines, &signature_ids)?;
 
             if !issues_found {
                 eprintln!("No issues found in info file.\r");
