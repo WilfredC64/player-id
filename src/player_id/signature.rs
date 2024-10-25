@@ -2,10 +2,7 @@
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
 use std::collections::HashMap;
-
 use str_utils::*;
-use substring::Substring;
-
 use super::bndm::{BndmConfig, find_pattern};
 
 const CMD_WILDCARD: u16 = 0x100;
@@ -163,10 +160,9 @@ impl Signature {
     }
 
     fn process_multi_signatures(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
-        for signature_line in &*signature_lines {
-            Self::process_signature_line(signature_name_to_filter, signatures, signature_name, signature_line);
+        for signature_line in signature_lines.drain(..) {
+            Self::process_signature_line(signature_name_to_filter, signatures, signature_name, &signature_line);
         }
-        signature_lines.clear();
     }
 
     fn process_single_signature(signature_name_to_filter: Option<&String>, signatures: &mut Vec<SignatureConfig>, signature_name: &str, signature_lines: &mut Vec<String>) {
@@ -193,7 +189,7 @@ impl Signature {
                         Self::add_signature(&signature, &mut bndm_configs);
                         signature.clear();
                     },
-                    _ => signature.push(Self::convert_hex_to_bin(word.substring(0, 2)))
+                    _ => signature.push(Self::convert_hex_to_bin(&word[..2]))
                 }
             }
         }
@@ -211,16 +207,16 @@ impl Signature {
 
     fn is_info_tag(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 11 {
-            let signature_first_11chars = &signature_text_line.substring(0, 11).as_bytes();
-            return (signature_first_11chars[9] == b':' && signature_first_11chars[10] == b' ') ||
-                signature_first_11chars.eq(b"           ");
+            let chars = signature_text_line[0..11].as_bytes();
+            (chars[9] == b':' && chars[10] == b' ') || &chars == b"           "
+        } else {
+            false
         }
-        false
     }
 
     fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
-            let signature_first_3chars = &signature_text_line.substring(0, 3).as_bytes();
+            let signature_first_3chars = &signature_text_line[..3].as_bytes();
             return signature_first_3chars[2] != b' ' &&
                 (signature_text_line.len() > 3 || signature_first_3chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none());
         }
