@@ -174,7 +174,7 @@ impl Signature {
     pub fn is_signature_name(signature_text_line: &str) -> bool {
         if signature_text_line.len() >= 3 {
             let chars = &signature_text_line.as_bytes()[..3];
-            chars[2] != b' ' && (chars.len() > 3 || chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none())
+            chars[2] != b' ' && (signature_text_line.len() > 3 || chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none())
         } else {
             false
         }
