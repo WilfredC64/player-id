@@ -1,7 +1,6 @@
 // Copyright (C) 2019 - 2024 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
-use str_utils::*;
 use super::bndm::{BndmConfig, find_pattern};
 
 const CMD_WILDCARD: u16 = 0x100;
@@ -73,7 +72,7 @@ impl Signature {
                     signature_name = signature_text.to_string();
                 } else {
                     signature_lines.push(signature_text.to_string());
-                    if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
+                    if Self::has_end_marker(signature_text) {
                         Self::process_single_signature(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
                     }
                 }
@@ -85,6 +84,11 @@ impl Signature {
 
         Self::process_multi_signatures(signature_name_to_filter, &mut signatures, &signature_name, &mut signature_lines);
         Ok(signatures)
+    }
+
+    pub fn has_end_marker(text: &str) -> bool {
+        let text_len = text.len();
+        text_len >= 3 && text.as_bytes()[text_len - 3..].eq_ignore_ascii_case(b"END")
     }
 
     pub fn read_info_lines(lines: &Vec<String>) -> Result<Vec<SignatureInfo>, String> {
@@ -163,18 +167,16 @@ impl Signature {
     }
 
     pub fn is_info_tag(signature_text_line: &str) -> bool {
-        if signature_text_line.len() >= 11 {
-            let chars = &signature_text_line.as_bytes()[0..11];
-            (chars[9] == b':' && chars[10] == b' ') || &chars == b"           "
+        if let Some(chars) = signature_text_line.as_bytes().get(..11) {
+            (chars[9] == b':' && chars[10] == b' ') || chars == b"           "
         } else {
             false
         }
     }
 
     pub fn is_signature_name(signature_text_line: &str) -> bool {
-        if signature_text_line.len() >= 3 {
-            let chars = &signature_text_line.as_bytes()[..3];
-            chars[2] != b' ' && (signature_text_line.len() > 3 || chars.eq_ignore_ascii_case_with_uppercase_multiple(&[b"END", b"AND"]).is_none())
+        if let Some(chars) = signature_text_line.as_bytes().get(..3) {
+            chars[2] != b' ' && (signature_text_line.len() > 3 || !matches!(&chars.to_ascii_uppercase()[..], b"END" | b"AND"))
         } else {
             false
         }

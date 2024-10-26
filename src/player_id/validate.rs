@@ -4,7 +4,6 @@
 use std::collections::HashMap;
 use crate::player_id::SignatureConfig;
 use crate::player_id::signature::Signature;
-use str_utils::*;
 
 pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
     let mut error = false;
@@ -42,7 +41,7 @@ pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
                 }
 
                 signature_lines.push(signature_text.to_string());
-                if signature_text.ends_with_ignore_ascii_case_with_uppercase("END") {
+                if Signature::has_end_marker(signature_text) {
                     error |= validate_signature_value(&signature_name, &signature_lines.join(" "));
                     signature_lines.clear();
                 }
