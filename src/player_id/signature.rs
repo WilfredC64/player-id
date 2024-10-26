@@ -228,13 +228,13 @@ impl Signature {
         let (wildcard_used, calculated_wildcard) = Self::calculate_wildcard(signature);
 
         if !wildcard_used || calculated_wildcard.is_some() {
-            let mut new_signature = vec![];
+            let mut new_signature = Vec::with_capacity(signature.len());
 
             for value in signature {
-                if *value < 0x100 {
-                    new_signature.push(*value as u8);
-                } else if *value == CMD_WILDCARD {
+                if *value == CMD_WILDCARD {
                     new_signature.push(calculated_wildcard.unwrap());
+                } else {
+                    new_signature.push(*value as u8);
                 }
             }
 
@@ -243,23 +243,23 @@ impl Signature {
     }
 
     fn calculate_wildcard(signature: &[u16]) -> (bool, Option<u8>) {
-        const SIGNATURE_MAX_VALUE: u16 = 0x100; // only bytes 0x00 - 0xFF are used and 0x100 for the wildcard
-        let mut bytes_used = [false; SIGNATURE_MAX_VALUE as usize + 1];
-        let mut wildcard = 0u16;
+        const SIGNATURE_MAX_VALUE: u16 = 0x100; // only bytes 0x00 - 0xFF are used, and 0x100 for the wildcard
 
-        for value in signature {
-            bytes_used[*value as usize] = true;
-            if wildcard == *value {
-                while wildcard < SIGNATURE_MAX_VALUE && bytes_used[wildcard as usize] {
-                    wildcard += 1;
-                }
-                if wildcard == SIGNATURE_MAX_VALUE {
-                    return (true, None);
-                }
-            }
+        let mut bytes_used = [false; SIGNATURE_MAX_VALUE as usize + 1];
+        for &value in signature {
+            bytes_used[value as usize] = true;
         }
 
-        (bytes_used[CMD_WILDCARD as usize], Some(wildcard as u8))
+        let mut wildcard = 0u16;
+        while wildcard < SIGNATURE_MAX_VALUE && bytes_used[wildcard as usize] {
+            wildcard += 1;
+        }
+
+        if wildcard == SIGNATURE_MAX_VALUE {
+            (true, None)
+        } else {
+            (bytes_used[CMD_WILDCARD as usize], Some(wildcard as u8))
+        }
     }
 
     fn convert_hex_to_bin(digit_string: &str) -> u16 {
