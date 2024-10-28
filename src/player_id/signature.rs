@@ -1,7 +1,7 @@
 // Copyright (C) 2019 - 2024 Wilfred Bos
 // Licensed under the MIT license. See the LICENSE file for the terms and conditions.
 
-use super::bndm::{BndmConfig, find_pattern};
+use bndm::{BndmConfig, find_pattern};
 
 const CMD_WILDCARD: u16 = 0x100;
 

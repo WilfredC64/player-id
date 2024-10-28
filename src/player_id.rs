@@ -3,7 +3,6 @@
 
 #![allow(dead_code)]
 
-mod bndm;
 mod signature;
 mod validate;
 
