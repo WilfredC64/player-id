@@ -1,5 +1,7 @@
 # Player-ID
 
+[![Rust](https://github.com/WilfredC64/player-id/actions/workflows/rust.yml/badge.svg)](https://github.com/WilfredC64/player-id/actions/workflows/rust.yml)
+
 Player-ID a.k.a. C64 Music Player Identifier (PI) is a cross-platform utility to
 identify Commodore 64 music players in SID files.
 
