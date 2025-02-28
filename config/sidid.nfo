@@ -357,6 +357,10 @@ Dutch-USA_Team/ProDrum
  RELEASED: 1988
 REFERENCE: https://csdb.dk/release/?id=20672
 
+ProDrum_2/Antifan
+   AUTHOR: Christian Grün (Antifan)
+REFERENCE: https://csdb.dk/release/?id=74041
+
 Ed/Wrath
    AUTHOR: Eddie Svärd (Ed)
 
@@ -1745,6 +1749,14 @@ XPMCK
    AUTHOR: Mic
  RELEASED: 2008
 REFERENCE: https://csdb.dk/release/?id=135624
+
+YM-64
+      NAME: YM-64
+    AUTHOR: Norbert Kehrer
+  RELEASED: 2010 Norbert Kehrer
+   COMMENT: Player that plays converted YM file songs made for the Yamaha YM2149
+            and AY-3-8910 sound chips, which were used in old computers such as
+            the Atari ST, Amstrad/Schneider CPC and Sinclair ZX Spectrum.
 
 Yip_MegaSound
      NAME: MegaSound Music Editor
