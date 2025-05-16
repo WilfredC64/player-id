@@ -133,7 +133,7 @@ impl Config {
     }
 
     fn get_filename_and_base_path() -> (String, String) {
-        let filename = env::args().last().unwrap();
+        let filename = env::args().next_back().unwrap();
         if !filename.starts_with('-') {
             Self::split_file_path(filename.trim())
         } else {
