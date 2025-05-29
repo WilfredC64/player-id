@@ -1751,12 +1751,12 @@ XPMCK
 REFERENCE: https://csdb.dk/release/?id=135624
 
 YM-64
-      NAME: YM-64
-    AUTHOR: Norbert Kehrer
-  RELEASED: 2010 Norbert Kehrer
-   COMMENT: Player that plays converted YM file songs made for the Yamaha YM2149
-            and AY-3-8910 sound chips, which were used in old computers such as
-            the Atari ST, Amstrad/Schneider CPC and Sinclair ZX Spectrum.
+     NAME: YM-64
+   AUTHOR: Norbert Kehrer
+ RELEASED: 2010 Norbert Kehrer
+  COMMENT: Player that plays converted YM file songs made for the Yamaha YM2149
+           and AY-3-8910 sound chips, which were used in old computers such as
+           the Atari ST, Amstrad/Schneider CPC and Sinclair ZX Spectrum.
 
 Yip_MegaSound
      NAME: MegaSound Music Editor
