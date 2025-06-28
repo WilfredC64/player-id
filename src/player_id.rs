@@ -56,7 +56,7 @@ impl PlayerId {
         let signature_ids = Signature::read_config_lines(&lines, player_name)?;
         if signature_ids.is_empty() {
             return Err(if let Some(player_name) = player_name {
-                format!("No signature found with name: {}", player_name)
+                format!("No signature found with name: {player_name}")
             } else {
                 "No signature defined.".to_string()
             })
