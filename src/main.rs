@@ -67,12 +67,13 @@ fn run() -> Result<(), String> {
     let start_time = Instant::now();
 
     let signature_ids = load_signatures(&config)?;
-    let files = get_matched_filenames(&config);
-
-    if files.is_empty() {
-        eprintln!("No file(s) found.\r");
-        return Ok(());
-    }
+    let files = match get_matched_filenames(&config) {
+        Some(f) => f,
+        None => {
+            eprintln!("No file(s) found.\r");
+            return Ok(());
+        }
+    };
 
     let mut identified_players = 0;
     let mut identified_files = 0;
@@ -193,21 +194,21 @@ fn load_signatures(config: &Config) -> Result<Vec<SignatureConfig>, String> {
     PlayerId::load_config_file(&config_path, config.player_name.as_ref())
 }
 
-fn get_matched_filenames(config: &Config) -> Vec<String> {
+fn get_matched_filenames(config: &Config) -> Option<Vec<String>> {
     if config.filename.is_empty() {
-        return vec![];
+        return None;
     }
 
     let max_depth = if config.recursive { usize::MAX } else { 1 };
 
-    globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
+    Some(globwalk::GlobWalkerBuilder::from_patterns(&config.base_path, &[&config.filename])
         .max_depth(max_depth)
         .case_insensitive(true)
         .sort_by(|a, b| a.file_name().cmp(b.file_name()))
-        .build().unwrap()
+        .build().ok()?
         .filter_map(Result::ok)
         .map(|entry| entry.path().display().to_string())
-        .collect()
+        .collect())
 }
 
 fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
