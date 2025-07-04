@@ -74,8 +74,8 @@ impl PlayerId {
     }
 
     pub fn get_info_file_path(config_file: Option<&String>) -> Result<PathBuf, String> {
-        let config_path_string = PlayerId::get_config_path(config_file)?.display().to_string().replace(".cfg", ".nfo");
-        PlayerId::get_config_path_with_fallback(&config_path_string)
+        let config_path_string = PlayerId::get_config_path(config_file)?.with_extension("nfo");
+        PlayerId::get_config_path_with_fallback(&config_path_string.to_string_lossy())
     }
 
     pub fn get_config_path(config_file: Option<&String>) -> Result<PathBuf, String> {
@@ -107,10 +107,8 @@ impl PlayerId {
 
         let output_string = Self::convert_ids_to_string(signature_ids, new_format);
 
-        let write_result = fs::write(config_path, output_string);
-        if let Err(write_error) = write_result {
-            return Err(format!("Error writing config file: {write_error}"));
-        }
+        fs::write(&config_path, output_string)
+            .map_err(|e| format!("Error writing config file: {e}"))?;
 
         eprintln!("Done!\r");
         Ok(())
