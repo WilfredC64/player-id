@@ -77,7 +77,6 @@ fn run() -> Result<(), String> {
 
     let mut identified_players = 0;
     let mut identified_files = 0;
-    let mut unidentified_files = 0;
 
     let pool = rayon::ThreadPoolBuilder::new().num_threads(config.cpu_threads).build().unwrap();
     pool.install(|| {
@@ -111,8 +110,6 @@ fn run() -> Result<(), String> {
             };
 
             if file_matches.matches.is_empty() {
-                unidentified_files += 1;
-
                 println!("{:<0width$} >> UNIDENTIFIED <<\r", filename[..filename_size].replace('\\', "/"), width = filename_width);
             } else {
                 identified_files += 1;
@@ -135,16 +132,12 @@ fn run() -> Result<(), String> {
             }
         }
 
-        if identified_files == 0 {
-            unidentified_files = matches.len();
-        } else {
-            unidentified_files = files.len() - identified_files;
-        }
-
         if identified_files > 0 {
             output_occurrence_statistics(&signature_ids, &matches);
         }
     });
+
+    let unidentified_files = files.len() - identified_files;
 
     println!("\r\nSummary:\r");
     println!("Identified players    {identified_players:>9}\r");
