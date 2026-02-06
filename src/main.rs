@@ -205,19 +205,15 @@ fn get_matched_filenames(config: &Config) -> Option<Vec<String>> {
 }
 
 fn calculate_filename_width(truncate_filenames: bool, players_found: &[FileMatches], filename_strip_length: usize) -> usize {
-    if !truncate_filenames {
-        if let Some(longest_filename_length) = players_found.iter().map(|fm| fm.filename.len()).max() {
-            return (longest_filename_length - filename_strip_length).max(DEFAULT_FILENAME_COL_WIDTH);
-        }
+    if !truncate_filenames && let Some(longest_filename_length) = players_found.iter().map(|fm| fm.filename.len()).max() {
+        return (longest_filename_length - filename_strip_length).max(DEFAULT_FILENAME_COL_WIDTH);
     }
     DEFAULT_FILENAME_COL_WIDTH
 }
 
 fn get_filename_strip_length(base_path: &str, files: &[String]) -> usize {
-    if let Some(first_file) = files.first() {
-        if let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
-            return hvsc_root.len() + 1;
-        }
+    if let Some(first_file) = files.first() && let Some(hvsc_root) = hvsc::get_hvsc_root(first_file) {
+        return hvsc_root.len() + 1;
     }
     if base_path == "." { 2 } else { 0 }
 }

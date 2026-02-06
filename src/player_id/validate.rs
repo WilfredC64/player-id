@@ -296,11 +296,9 @@ fn validate_signature_range(signature_name: &str, signature_text: &str) -> bool 
 fn validate_info_tag_value(signature_name: &str, tag: &str, value: &str) -> bool {
     let mut error = false;
 
-    if let Some(first_char) = value.chars().next() {
-        if first_char.is_ascii_whitespace() {
-            error = true;
-            eprintln!("Value in '{}' is not correctly aligned in: {}\r", tag.trim(), signature_name);
-        }
+    if let Some(first_char) = value.chars().next() && first_char.is_ascii_whitespace() {
+        error = true;
+        eprintln!("Value in '{}' is not correctly aligned in: {}\r", tag.trim(), signature_name);
     }
 
     if tag.eq_ignore_ascii_case("REFERENCE:") && !value.trim().to_ascii_uppercase().starts_with("HTTP") {

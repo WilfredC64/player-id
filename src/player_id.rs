@@ -42,11 +42,9 @@ impl PlayerId {
     }
 
     pub fn is_config_file(filename: &str) -> bool {
-        if let Ok(path) = PlayerId::get_config_path_with_fallback(filename) {
-            if let Ok(file) = File::open(path) {
-                let lines = Self::get_first_few_lines_from_file(file);
-                return Signature::is_config_file(&lines);
-            }
+        if let Ok(path) = PlayerId::get_config_path_with_fallback(filename) && let Ok(file) = File::open(path) {
+            let lines = Self::get_first_few_lines_from_file(file);
+            return Signature::is_config_file(&lines);
         }
         false
     }
@@ -137,10 +135,8 @@ impl PlayerId {
 
                 output_string += &bndm_config.pattern.iter()
                     .map(|byte| {
-                        if let Some(wildcard) = bndm_config.wildcard {
-                            if *byte == wildcard {
-                                return "??".to_string();
-                            }
+                        if let Some(wildcard) = bndm_config.wildcard && *byte == wildcard {
+                            return "??".to_string();
                         }
                         format!("{byte:02X}")
                     })

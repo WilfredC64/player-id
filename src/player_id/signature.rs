@@ -135,10 +135,8 @@ impl Signature {
             if line.trim().is_empty() {
                 continue;
             }
-            if Self::is_signature_min_length(line) && Self::is_signature_name(line) {
-                if let Some(line) = lines_iter.next() {
-                    return Self::is_signature_min_length(line) && !Self::is_signature_name(line);
-                }
+            if Self::is_signature_min_length(line) && Self::is_signature_name(line) && let Some(line) = lines_iter.next() {
+                return Self::is_signature_min_length(line) && !Self::is_signature_name(line);
             }
             break;
         }
@@ -152,10 +150,10 @@ impl Signature {
             if line.trim().is_empty() {
                 continue;
             }
-            if Self::is_signature_min_length(line) && Self::is_signature_name(line) && !Self::is_info_tag(line) {
-                if let Some(line) = lines_iter.next() {
+            if Self::is_signature_min_length(line)
+                && Self::is_signature_name(line) && !Self::is_info_tag(line)
+                && let Some(line) = lines_iter.next() {
                     return Self::is_signature_min_length(line) && Self::is_info_tag(line);
-                }
             }
             break;
         }
