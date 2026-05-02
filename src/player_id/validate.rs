@@ -5,16 +5,15 @@ use std::collections::HashMap;
 use crate::player_id::SignatureConfig;
 use crate::player_id::signature::Signature;
 
-pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
+pub fn verify_config_file(config_lines: &[String]) -> Result<bool, String> {
     let mut error = false;
     let mut signature_names_added = HashMap::new();
 
-    let mut line_number = 1;
-    let mut last_empty_line_number = -1;
+    let mut last_empty_line_number = usize::MAX;
     let mut signature_name = "".to_string();
     let mut signature_lines = vec![];
 
-    for line in config_lines {
+    for (index, line) in config_lines.iter().enumerate() {
         let signature_text = line.trim();
 
         if Signature::is_signature_min_length(signature_text) {
@@ -34,7 +33,7 @@ pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
 
                     if signature_text.eq_ignore_ascii_case("END") ||
                         signature_text.eq_ignore_ascii_case("AND") {
-                        eprintln!("Signature name cannot be a reserved word at line: {line_number}\r");
+                        eprintln!("Signature name cannot be a reserved word at line: {}\r", index + 1);
                     } else {
                         eprintln!("Signature found without a name: {signature_text}\r");
                     }
@@ -64,9 +63,9 @@ pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
                 signature_names_added.insert(signature_name.to_ascii_uppercase(), true);
             }
 
-            if line.is_empty() && last_empty_line_number == line_number - 1 {
+            if line.is_empty() && last_empty_line_number == index {
                 error = true;
-                eprintln!("Two consecutive empty lines found at line: {line_number}\r");
+                eprintln!("Two consecutive empty lines found at line: {}\r", index + 1);
             }
 
             if error {
@@ -75,10 +74,8 @@ pub fn verify_config_file(config_lines: &Vec<String>) -> Result<bool, String> {
                 signature_name = "".to_string();
             }
 
-            last_empty_line_number = line_number;
+            last_empty_line_number = index + 1;
         }
-
-        line_number += 1;
     }
 
     error |= validate_signature_without_value(&signature_names_added, &signature_name);
