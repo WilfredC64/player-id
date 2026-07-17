@@ -228,13 +228,13 @@ fn display_player_info(config: &Config) -> Result<(), String> {
     if let Some((signature_name, info_lines)) = PlayerId::find_player_info(&player_infos, player_name) {
         println!("Player info:\r\n\r\n{}\r\n{}\r", signature_name, info_lines.join("\r\n"));
     } else {
-        eprintln!("No info found for player ID: {}\r", &player_name);
+        eprintln!("No info found for player ID: {}\r", player_name);
     }
     Ok(())
 }
 
 fn print_usage() {
-    println!("C64 Music Player Identifier (PI) v2.01 - Copyright (c) 2012-2023 Wilfred Bos\r\n\r");
+    println!("C64 Music Player Identifier (PI) v2.02 - Copyright (c) 2012-2026 Wilfred Bos\r\n\r");
     println!("Usage: player-id <options> <file_path_pattern>\r\n\r");
     println!("<Options>\r");
     println!("  -c{{max_threads}}: set the maximum CPU threads to be used [Default is all]\r");
